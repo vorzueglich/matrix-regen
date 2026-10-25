@@ -2,6 +2,14 @@
 
 Versionierung: **Major.Minor**. Neue App-Versionen mit kurzer Aenderungsuebersicht; Dokumentationsaenderungen allein erhoehen die App-Version nicht.
 
+## v1.5 – 25.10.2026 (produktiv)
+- Mobilfreundlicher Einstellungsdialog neben Pause und Hilfe mit vier Live-Reglern.
+- Regendichte, Zeichengroesse, Fallgeschwindigkeit und Leerraum/Nachleuchten einstellbar.
+- v1.4-Darstellung als Standard; Reset auf Standardwerte.
+- Lokale Speicherung mit Validierung und Ausweichverhalten bei gesperrtem Speicher.
+- App-Titel, Status und Service-Worker-Cache konsistent auf v1.5.
+- Sichtbarkeit der Bedienleiste beim Tippen korrigiert; Zeichenvorrat fuer lange Schweife vervollstaendigt.
+
 ## v1.4 – 25.10.2026 (produktiv)
 - Schwarze, regelmaessig wandernde Wellenbalken entfernt.
 - Zeichen kleiner, Streams laenger, Nachleuchten ausgepraegter.
