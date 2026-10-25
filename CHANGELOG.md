@@ -2,6 +2,12 @@
 
 Versionierung: **Major.Minor**. Neue App-Versionen mit kurzer Aenderungsuebersicht; Dokumentationsaenderungen allein erhoehen die App-Version nicht.
 
+## v1.6 – 25.10.2026 (produktiv)
+- Update-Fehler behoben: Navigationen online zuerst aus dem Netzwerk, offline aus dem aktuellen App-Cache.
+- Neue Offline-Dateien ohne veralteten HTTP-Cache laden.
+- Service-Worker-Update explizit pruefen und bei Controller-Wechsel einmal neu laden.
+- Gespeicherte Einstellungen und v1.4-Standarddarstellung erhalten.
+
 ## v1.5 – 25.10.2026 (produktiv)
 - Mobilfreundlicher Einstellungsdialog neben Pause und Hilfe mit vier Live-Reglern.
 - Regendichte, Zeichengroesse, Fallgeschwindigkeit und Leerraum/Nachleuchten einstellbar.
