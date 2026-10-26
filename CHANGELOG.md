@@ -2,6 +2,11 @@
 
 Versionierung: **Major.Minor**. Neue App-Versionen mit kurzer Aenderungsuebersicht; Dokumentationsaenderungen allein erhoehen die App-Version nicht.
 
+## Korrektur v1.7-r14 – 26.10.2026
+- Regendichte 190 auf 235 % der Reglerbasis und Schweife 43–75 auf 75–115 Zeichen verlaengert.
+- Getroffene Buchstabenstellen speichern ihre Matrix-Glyphen bis zum Wegspuelen mit langem Nachleuchten.
+- Hintergrund-Nachleuchten etwas verlaengert und Regenfluss neben Buchstaben unveraendert.
+
 ## Korrektur v1.7-r13 – 26.10.2026
 - Durchgehenden Matrix-Regen ueber die gesamte Bildhoehe und -breite wiederhergestellt.
 - Wortfuellung im einzigen Regen-Zeichendurchgang, ausschliesslich auf Buchstabenpixeln; keine Unterbrechung in Leerraeumen.
