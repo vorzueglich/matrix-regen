@@ -2,6 +2,11 @@
 
 Versionierung: **Major.Minor**. Neue App-Versionen mit kurzer Aenderungsuebersicht; Dokumentationsaenderungen allein erhoehen die App-Version nicht.
 
+## Korrektur v1.7-r3 – 26.10.2026
+- Vollflaechige schwarze Abdunkelung entfernt; Matrix-Regen bleibt hinter der Schrift sichtbar.
+- Grosse dicke Buchstaben werden aus stabilen ASCII-Zeichen aufgebaut, mit sanftem gruenem Leuchten.
+- Maskengitter an Wortlaenge und Bildschirmabmessungen angepasst; weiterhin v1.7.
+
 ## v1.7 – 26.10.2026 (produktiv, korrigierte Fassung)
 - Wortanimation neu gebaut: grosse Zeichenraster statt kleinteiliger Regen-Maske; stabile Glyphen und abgedunkelter Wortbereich.
 - Sätze werden automatisch in einzelne Woerter zerlegt; jeweils ein Wort sichtbar.
