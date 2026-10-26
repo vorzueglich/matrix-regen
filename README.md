@@ -20,7 +20,7 @@ In Safari die [Website](https://vorzueglich.github.io/matrix-regen/) oeffnen →
 ## Projektdateien
 - `index.html`: HTML, CSS und JavaScript fuer die Canvas-Animation
 - `manifest.webmanifest`: PWA-Metadaten
-- `sw.js`: Offline-Cache (aktuell `matrix-regen-v1.7-r10`)
+- `sw.js`: Offline-Cache (aktuell `matrix-regen-v1.7-r12`)
 - `icon.svg`: App-Symbol
 - `CHANGELOG.md`: Aenderungshistorie
 
@@ -92,3 +92,6 @@ Regen horizontal rund 65 % dichter (auch bei lokal gespeicherter Dichte 100 %). 
 
 ### v1.7-r11 – Umsetzung Bildfolge (26.10.2026)
 Visueller Ablauf gemäss bestätigter Skizze: sehr dichter Matrix-Regen über der Wortzone, darunter schwarz. Die Buchstabensilhouette wird Zeile für Zeile durch weiterfliessende Glyphen derselben Spalten gefüllt, für eine Sekunde gehalten und von oben nach unten ausgewaschen. Ausserhalb der Wortzone unterhalb keine Glyphen. Eine einzige Animation auf dem Canvas, weiterhin v1.7. Regen-Dichte-Faktor 1.9, adaptive Wortbreite, URL-Teilen und Einstellungen erhalten.
+
+### v1.7-r12 – Durchgehender Regen (26.10.2026)
+Regen laeuft wieder ueber die ganze Bildschirmausdehnung, auch unterhalb und hinter dem Wort. Die Wortfuellung / 1-s-Haltephase / Auswaschphase bleibt als heller Glypheneffekt erhalten. Keine vertikale Abschneidung des normalen Regens an der Wort-Oberkante.
