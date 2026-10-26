@@ -2,6 +2,11 @@
 
 Versionierung: **Major.Minor**. Neue App-Versionen mit kurzer Aenderungsuebersicht; Dokumentationsaenderungen allein erhoehen die App-Version nicht.
 
+## Korrektur v1.7-r13 – 26.10.2026
+- Durchgehenden Matrix-Regen ueber die gesamte Bildhoehe und -breite wiederhergestellt.
+- Wortfuellung im einzigen Regen-Zeichendurchgang, ausschliesslich auf Buchstabenpixeln; keine Unterbrechung in Leerraeumen.
+- Urspruengliches Nachleuchten erhalten; Leerzustand = normaler Regen.
+
 ## Korrektur v1.7-r12 – 26.10.2026
 - Regen nicht mehr an der Wortoberkante abschneiden: vertikaler Matrix-Regen fliesst wieder ueber die gesamte Seite.
 - Wort bleibt als aufgefuellte helle Zeichenform erkennbar; Fuellen, 1-s-Halten und Auswaschen unveraendert.
