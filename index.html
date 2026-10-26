@@ -24,11 +24,11 @@ input[type=text],input[type=number],textarea,select{box-sizing:border-box;width:
 <hr><h3>Nachrichten im Matrix-Regen</h3>
 <label for="message">Nachricht (automatisch Wort fuer Wort)</label>
 <textarea id="message" maxlength="600" placeholder="Leer = normaler Matrix-Regen"></textarea>
-<label for="messageStyle">Darstellung</label><select id="messageStyle"><option value="filled">Ausgefuellte Zeichen</option><option value="outline">Umrisse</option><option value="ghost">Geisterschrift</option></select>
+<label for="wordSize">Maximale Wortbreite <output id="wordSizeValue">95 %</output></label><input id="wordSize" type="range" min="50" max="100" step="5" value="95"><p class="small">Lange Woerter passen automatisch auf den Bildschirm. 100 % nutzt die verfuegbare Breite.</p><label for="messageStyle">Darstellung</label><select id="messageStyle"><option value="filled">Ausgefuellte Zeichen</option><option value="outline">Umrisse</option><option value="ghost">Geisterschrift</option></select>
 <label for="hold">Sichtbar pro Wort (Sekunden)</label><input id="hold" type="number" min="0.5" max="60" step="0.5" value="2.5">
 <label for="fade">Ein-/Ausblenden (Sekunden)</label><input id="fade" type="number" min="0.5" max="15" step="0.5" value="0.8">
 <label for="gap">Pause zwischen Woertern (Sekunden)</label><input id="gap" type="number" min="0" max="30" value="0.3">
-<p class="small">Jedes Wort erscheint einzeln und gross als stabile ASCII-Zeichen. Der Matrix-Regen laeuft dahinter weiter.</p>
+<p class="small">Jedes Wort erscheint einzeln in schlanker 5x7-Matrix-Schrift, mit mindestens 2 Rasterspalten Abstand. Der Matrix-Regen laeuft dahinter weiter.</p>
 <div class="actions"><button id="share">Nachrichten-Link kopieren</button><button id="clearMessage">Nachricht entfernen</button></div>
 <p id="shareStatus" class="small" role="status"></p>
 <p id="storageNote" role="status">Werte werden auf diesem Geraet gespeichert.</p>
@@ -36,17 +36,17 @@ input[type=text],input[type=number],textarea,select{box-sizing:border-box;width:
 </dialog><script>
 (()=>{'use strict';const canvas=document.querySelector('#rain'),ctx=canvas.getContext('2d',{alpha:false}),ui=document.querySelector('#ui'),pause=document.querySelector('#pause');let w,h,font,cols,last=0,time=0,running=true;const defaults={density:100,size:100,speed:100,space:50};
 const limits={density:[25,150],size:[70,200],speed:[25,200],space:[0,100]};
-const storageKey='matrix-regen-settings';const messageDefaults={message:'',messageStyle:'filled',hold:2.5,fade:0.8,gap:0.3};let messageSettings={...messageDefaults},messageClock=0,maskCanvas=document.createElement('canvas'),maskCtx=maskCanvas.getContext('2d',{willReadFrequently:true}),maskPixels=null,maskW=0,maskH=0,maskText='',maskMode='',maskFont=0;
+const storageKey='matrix-regen-settings';const messageDefaults={message:'',messageStyle:'filled',hold:2.5,fade:0.8,gap:0.3,wordSize:95};let messageSettings={...messageDefaults},messageClock=0,maskCanvas=document.createElement('canvas'),maskCtx=maskCanvas.getContext('2d',{willReadFrequently:true}),maskPixels=null,maskW=0,maskH=0,maskText='',maskMode='',maskFont=0;
 const clamp=(v,lo,hi)=>Math.min(hi,Math.max(lo,v));
 const params=new URLSearchParams(location.search);
 function cleanMessage(value){return String(value||'').slice(0,600).replace(/\\n/g,'\n').replace(/[\u0000-\u0009\u000b-\u001f]/g,' ').trim();}
 function lines(){return messageSettings.message.split(/\s+|\|/u).map(s=>s.trim()).filter(Boolean).slice(0,80);}
 function invalidateMask(){maskText='';maskPixels=null;}
-function syncMessageControls(){for(const key of Object.keys(messageDefaults))document.getElementById(key).value=messageSettings[key];}
+function syncMessageControls(){for(const key of Object.keys(messageDefaults))document.getElementById(key).value=messageSettings[key];document.getElementById('wordSizeValue').textContent=messageSettings.wordSize+' %';}
 function saveMessage(){try{localStorage.setItem('matrix-regen-message-v1.7',JSON.stringify(messageSettings));}catch{}}
-try{const x=JSON.parse(localStorage.getItem('matrix-regen-message-v1.7'));if(x&&typeof x==='object'){messageSettings.message=cleanMessage(x.message);if(['filled','outline','ghost'].includes(x.messageStyle))messageSettings.messageStyle=x.messageStyle;for(const k of ['hold','fade','gap'])if(Number.isFinite(Number(x[k])))messageSettings[k]=clamp(Number(x[k]),k==='hold'?.5:k==='fade'?.2:0,k==='hold'?60:k==='fade'?15:30);}}catch{}
+try{const x=JSON.parse(localStorage.getItem('matrix-regen-message-v1.7'));if(x&&typeof x==='object'){messageSettings.message=cleanMessage(x.message);if(['filled','outline','ghost'].includes(x.messageStyle))messageSettings.messageStyle=x.messageStyle;for(const k of ['hold','fade','gap','wordSize'])if(Number.isFinite(Number(x[k])))messageSettings[k]=clamp(Number(x[k]),k==='hold'?.5:k==='fade'?.2:k==='wordSize'?50:0,k==='hold'?60:k==='fade'?15:k==='wordSize'?100:30);}}catch{}
 const urlMessage=params.get('msg')??params.get('text');
-if(urlMessage!==null){messageSettings.message=cleanMessage(urlMessage.replace(/\|/g,'\n'));messageClock=0;const s=params.get('style');if(['filled','outline','ghost'].includes(s))messageSettings.messageStyle=s;for(const k of ['hold','fade','gap']){const v=params.get(k);if(v!==null&&Number.isFinite(Number(v)))messageSettings[k]=clamp(Number(v),k==='hold'?1:k==='fade'?.5:0,k==='hold'?60:k==='fade'?15:30);}}
+if(urlMessage!==null){const widthParam=Number(params.get('width'));if(params.has('width')&&Number.isFinite(widthParam))messageSettings.wordSize=clamp(widthParam,50,100);messageSettings.message=cleanMessage(urlMessage.replace(/\|/g,'\n'));messageClock=0;const s=params.get('style');if(['filled','outline','ghost'].includes(s))messageSettings.messageStyle=s;for(const k of ['hold','fade','gap']){const v=params.get(k);if(v!==null&&Number.isFinite(Number(v)))messageSettings[k]=clamp(Number(v),k==='hold'?1:k==='fade'?.5:0,k==='hold'?60:k==='fade'?15:30);}}
 
 let settings={...defaults};
 try{const saved=JSON.parse(localStorage.getItem(storageKey));if(saved&&typeof saved==='object')for(const key of Object.keys(defaults)){const value=saved[key];if(typeof value==='number'&&Number.isFinite(value))settings[key]=Math.round(Math.max(limits[key][0],Math.min(limits[key][1],value))/5)*5;}}catch{}
@@ -58,54 +58,40 @@ document.querySelector('#settingsButton').onclick=()=>{document.querySelector('#
 document.querySelector('#settingsClose').onclick=()=>panel.close();
 document.querySelector('#reset').onclick=()=>{settings={...defaults};messageSettings={...messageDefaults};messageClock=0;syncControls();syncMessageControls();saveSettings();saveMessage();invalidateMask();resize();};
 syncControls();syncMessageControls();
-for(const key of Object.keys(messageDefaults))document.getElementById(key).addEventListener('input',e=>{messageSettings[key]=key==='message'?cleanMessage(e.target.value):key==='messageStyle'?e.target.value:clamp(Number(e.target.value)||0,key==='hold'?.5:key==='fade'?.2:0,key==='hold'?60:key==='fade'?15:30);messageClock=0;invalidateMask();saveMessage();});
+for(const key of Object.keys(messageDefaults))document.getElementById(key).addEventListener('input',e=>{messageSettings[key]=key==='message'?cleanMessage(e.target.value):key==='messageStyle'?e.target.value:clamp(Number(e.target.value)||0,key==='hold'?.5:key==='fade'?.2:key==='wordSize'?50:0,key==='hold'?60:key==='fade'?15:key==='wordSize'?100:30);messageClock=0;invalidateMask();syncMessageControls();saveMessage();});
 document.querySelector('#clearMessage').onclick=()=>{messageSettings.message='';messageClock=0;invalidateMask();syncMessageControls();saveMessage();history.replaceState(null,'',location.pathname+location.hash);document.querySelector('#shareStatus').textContent='Normaler Matrix-Regen aktiviert.';};
-document.querySelector('#share').onclick=async()=>{const entries=messageSettings.message.trim().split(/\n|\|/).map(x=>x.trim()).filter(Boolean);if(!entries.length){document.querySelector('#shareStatus').textContent='Zuerst eine Nachricht eingeben.';return;}const url=new URL(location.href);url.search='';url.searchParams.set('msg',entries.join(' '));url.searchParams.set('style',messageSettings.messageStyle);url.searchParams.set('hold',messageSettings.hold);url.searchParams.set('fade',messageSettings.fade);url.searchParams.set('gap',messageSettings.gap);try{await navigator.clipboard.writeText(url.href);document.querySelector('#shareStatus').textContent='Link kopiert: '+url.href;}catch{document.querySelector('#shareStatus').textContent='Link zum Kopieren: '+url.href;}};
+document.querySelector('#share').onclick=async()=>{const entries=messageSettings.message.trim().split(/\n|\|/).map(x=>x.trim()).filter(Boolean);if(!entries.length){document.querySelector('#shareStatus').textContent='Zuerst eine Nachricht eingeben.';return;}const url=new URL(location.href);url.search='';url.searchParams.set('msg',entries.join(' '));url.searchParams.set('style',messageSettings.messageStyle);url.searchParams.set('hold',messageSettings.hold);url.searchParams.set('fade',messageSettings.fade);url.searchParams.set('gap',messageSettings.gap);url.searchParams.set('width',messageSettings.wordSize);try{await navigator.clipboard.writeText(url.href);document.querySelector('#shareStatus').textContent='Link kopiert: '+url.href;}catch{document.querySelector('#shareStatus').textContent='Link zum Kopieren: '+url.href;}};
 
 let wordCells=[],wordBox=null;
+const FONT5={"0":["01110","10011","10101","10101","11001","10001","01110"],"1":["010","110","010","010","010","010","111"],"2":["11110","00001","00001","01110","10000","10000","11111"],"3":["11110","00001","00001","01110","00001","00001","11110"],"4":["10010","10010","10010","11111","00010","00010","00010"],"5":["11111","10000","10000","11110","00001","00001","11110"],"6":["01111","10000","10000","11110","10001","10001","01110"],"7":["11111","00001","00010","00100","01000","01000","01000"],"8":["01110","10001","10001","01110","10001","10001","01110"],"9":["01110","10001","10001","01111","00001","00001","11110"],"A":["01110","11011","10001","11111","10001","10001","10001"],"B":["11110","10001","10001","11110","10001","10001","11110"],"C":["01111","11000","10000","10000","10000","11000","01111"],"D":["11110","10001","10001","10001","10001","10001","11110"],"E":["11111","10000","10000","11110","10000","10000","11111"],"F":["11111","10000","10000","11110","10000","10000","10000"],"G":["01111","10000","10000","10111","10001","10001","01111"],"H":["10001","10001","10001","11111","10001","10001","10001"],"I":["111","010","010","010","010","010","111"],"J":["00111","00010","00010","00010","10010","10010","01100"],"K":["10001","10010","10100","11000","10100","10010","10001"],"L":["10000","10000","10000","10000","10000","10000","11111"],"M":["10001","11011","10101","10101","10001","10001","10001"],"N":["10001","11001","10101","10011","10001","10001","10001"],"O":["01110","10001","10001","10001","10001","10001","01110"],"P":["11110","10001","10001","11110","10000","10000","10000"],"Q":["01110","10001","10001","10001","10101","10010","01101"],"R":["11110","10001","10001","11110","10100","10010","10001"],"S":["01111","10000","10000","01110","00001","00001","11110"],"T":["11111","00100","00100","00100","00100","00100","00100"],"U":["10001","10001","10001","10001","10001","10001","01110"],"V":["10001","10001","10001","10001","10001","01010","00100"],"W":["10001","10001","10001","10101","10101","10101","01010"],"X":["10001","10001","01010","00100","01010","10001","10001"],"Y":["10001","10001","01010","00100","00100","00100","00100"],"Z":["11111","00001","00010","00100","01000","10000","11111"],"-":["000","000","000","111","000","000","000"],".":["0","0","0","0","0","1","1"],"!":["1","1","1","1","1","0","1"],"?":["1110","0001","0001","0110","0100","0000","0100"],":":["0","1","1","0","1","1","0"],"Ä":["01010","00000","01110","11011","11111","10001","10001"],"Ö":["01010","00000","01110","10001","10001","10001","01110"],"Ü":["01010","00000","10001","10001","10001","10001","01110"],"É":["00100","00010","11111","10000","11110","10000","11111"]};
 function buildMask(txt){
- if(maskText===txt&&maskMode===messageSettings.messageStyle&&maskW===w&&maskH===h)return;
- maskText=txt;maskMode=messageSettings.messageStyle;maskW=w;maskH=h;
- // Build big, thick letter silhouettes, then replace filled pixels with fixed Matrix glyphs.
- // No background rectangle: the original rain remains visible everywhere.
- const cell=Math.max(8,Math.min(12,font*.96));
- const maxW=Math.floor(w*.94/cell)*cell;
- const maxH=Math.floor(Math.min(h*.33,w*.60)/cell)*cell;
- const m=maskCtx;
- maskCanvas.width=Math.max(1,Math.round(maxW));
- maskCanvas.height=Math.max(1,Math.round(maxH));
- m.clearRect(0,0,maskCanvas.width,maskCanvas.height);
- const cx=maskCanvas.width/2,cy=maskCanvas.height/2;
- let size=Math.min(maxH*.90,maxW*.68);
- m.textAlign='center';m.textBaseline='middle';m.lineJoin='round';
- while(size>12){
-   m.font='900 '+size+'px system-ui,Arial,sans-serif';
-   if(m.measureText(txt).width<=maxW*.96)break;
-   size-=1;
- }
- m.font='900 '+Math.max(12,size)+'px system-ui,Arial,sans-serif';
- if(messageSettings.messageStyle==='outline'){
-   m.strokeStyle='#fff';m.lineWidth=Math.max(cell*1.15,size*.075);
-   m.strokeText(txt,cx,cy);
- }else{
-   m.fillStyle='#fff';m.fillText(txt,cx,cy);
- }
- const data=m.getImageData(0,0,maskCanvas.width,maskCanvas.height).data;
- wordCells=[];
- const ox=(w-maxW)/2,oy=(h-maxH)/2;
- const seedText='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ@#$%&';
- const nx=Math.floor(maxW/cell),ny=Math.floor(maxH/cell);
- for(let iy=0;iy<ny;iy++)for(let ix=0;ix<nx;ix++){
-  const px=Math.min(maskCanvas.width-1,Math.floor((ix+.5)*cell));
-  const py=Math.min(maskCanvas.height-1,Math.floor((iy+.5)*cell));
-  let hits=0;
-  for(const [dx,dy] of [[0,0],[-cell*.26,0],[cell*.26,0],[0,-cell*.26],[0,cell*.26]]){
-   const xx=clamp(Math.round(px+dx),0,maskCanvas.width-1),yy=clamp(Math.round(py+dy),0,maskCanvas.height-1);
-   if(data[(yy*maskCanvas.width+xx)*4+3]>60)hits++;
+ const key=txt+'|'+messageSettings.wordSize;
+ if(maskText===key&&maskMode===messageSettings.messageStyle&&maskW===w&&maskH===h)return;
+ maskText=key;maskMode=messageSettings.messageStyle;maskW=w;maskH=h;
+ // Bitmap-Glyphs guarantee 2 empty character-columns between letters.
+ const glyphs=Array.from(txt.toLocaleUpperCase('de-CH')).map(ch=>FONT5[ch]||FONT5[ch.normalize('NFD').charAt(0)]||FONT5['?']);
+ const gap=2,strokeWidth=2;
+ const units=glyphs.reduce((n,g)=>n+g[0].length*strokeWidth+gap,0)-gap;
+ const budget=w*messageSettings.wordSize/100;
+ const cell=Math.min(Math.max(5,font*.9),budget/Math.max(units,1),(h*.31)/7);
+ const effective=Math.max(.7,cell),width=units*effective,height=7*effective;
+ const left=(w-width)/2,top=(h-height)/2;
+ const seed='0123456789ABCDEFGHJKLMNPQRSTUVWXYZ@#$%&';
+ wordCells=[];let col=0;
+ glyphs.forEach(g=>{
+  for(let row=0;row<7;row++)for(let x=0;x<g[row].length;x++){
+   if(g[row][x]!=='1')continue;
+   for(let dx=0;dx<strokeWidth;dx++){
+    const column=col+x*strokeWidth+dx;
+    const outline=messageSettings.messageStyle==='outline';
+    const edge=row===0||row===6||x===0||x===g[row].length-1||!g[row-1]?.[x]||g[row-1][x]!=='1'||!g[row+1]?.[x]||g[row+1][x]!=='1';
+    if(outline&&!edge)continue;
+    wordCells.push({x:left+column*effective,y:top+row*effective,glyph:seed[Math.random()*seed.length|0],bright:Math.random(),order:Math.random()});
+   }
   }
-  if(hits>=1)wordCells.push({x:ox+ix*cell,y:oy+iy*cell,glyph:seedText[Math.random()*seedText.length|0],bright:Math.random(),order:Math.random()});
- }
- wordBox={x:ox,y:oy,width:maxW,height:maxH,cell};
+  col+=g[0].length*strokeWidth+gap;
+ });
+ wordBox={cell:effective,width,height,x:left,y:top};
 }
 function messagePhase(){
  const a=lines();if(!a.length)return null;
@@ -119,10 +105,10 @@ function renderWord(phase){
  buildMask(phase.text);
  const alpha=phase.strength,cell=wordBox.cell;
  ctx.save();
- ctx.font='900 '+(cell*1.08)+'px monospace';
+ ctx.font='900 '+(cell*.98)+'px monospace';
  ctx.textBaseline='top';
  ctx.shadowColor='rgba(60,255,105,'+(alpha*.85)+')';
- ctx.shadowBlur=cell*.55;
+ ctx.shadowBlur=Math.min(5,cell*.25);
  for(const p of wordCells){
   // Stable characters with staggered emergence, not randomized each frame.
   if(p.order>Math.min(1,alpha*1.7))continue;
