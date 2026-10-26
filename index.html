@@ -80,16 +80,18 @@ function buildMask(txt){
   }
  }
  const total=columns.length,top=Math.floor((h/font-7*vertical)/2);
- const left=Math.max(0,Math.floor((cols.length-total)/2));
+ const target=Math.min(Math.floor(cols.length*messageSettings.wordSize/100),Math.max(total,Math.round(total*1.65)));
+ const expanded=Array.from({length:target},(_,i)=>columns[Math.min(total-1,Math.floor(i*total/target))]);
+ const left=Math.max(0,Math.floor((cols.length-target)/2));
  wordLookup=new Set();
- for(let x=0;x<total;x++)for(let y=0;y<7*vertical;y++){
-  if(!columns[x][y])continue;
+ for(let x=0;x<target;x++)for(let y=0;y<7*vertical;y++){
+  if(!expanded[x][y])continue;
   if(messageSettings.messageStyle==='outline'){
-    if(columns[x-1]?.[y]&&columns[x+1]?.[y]&&columns[x]?.[y-1]&&columns[x]?.[y+1])continue;
+    if(expanded[x-1]?.[y]&&expanded[x+1]?.[y]&&expanded[x]?.[y-1]&&expanded[x]?.[y+1])continue;
   }
   wordLookup.add((left+x)+','+(top+y));
  }
- wordBounds={left,right:left+total,top,bottom:top+7*vertical};
+ wordBounds={left,right:left+target,top,bottom:top+7*vertical};
 }
 function messagePhase(){
  const a=lines();if(!a.length)return null;
@@ -114,8 +116,9 @@ const chars='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz@#$%&
  const dpr=Math.min(devicePixelRatio||1,2);
  canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);
  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.textBaseline='top';
- cols=Array.from({length:Math.ceil(w/font*settings.density/100)},(_,i)=>({
-  x:i*font*100/settings.density,y:rand(-h,h),speed:rand(55,185),
+ const rainDensity=settings.density*1.65;
+ cols=Array.from({length:Math.ceil(w/font*rainDensity/100)},(_,i)=>({
+  x:i*font*100/rainDensity,y:rand(-h,h),speed:rand(55,185),
   length:rand(43,75)|0,glyphs:Array.from({length:150},pick)
  }));
  ctx.fillStyle='#000';ctx.fillRect(0,0,w,h);invalidateMask();
