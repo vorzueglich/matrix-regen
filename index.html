@@ -115,8 +115,8 @@ const chars='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz@#$%&
   if(c.y-length*font>h+30)c.y=rand(-120,-20);
   const head=Math.floor(c.y/font);
   const active=!!(phase&&phase.strength>0&&wordBounds&&ci>=wordBounds.left&&ci<wordBounds.right);
-  const start=active?Math.min(head,wordBounds.top):head;
-  const end=active?Math.max(head-length+1,wordBounds.bottom-1):head-length+1;
+  const start=active?Math.max(head,wordBounds.bottom-1):head;
+  const end=active?Math.min(head-length+1,wordBounds.top):head-length+1;
   // ONE rendering path: all characters are flowing rain, including letter cells.
   for(let row=start;row>=end;row--){
    const y=row*font;if(y<0||y>h)continue;
