@@ -2,6 +2,12 @@
 
 Versionierung: **Major.Minor**. Neue App-Versionen mit kurzer Aenderungsuebersicht; Dokumentationsaenderungen allein erhoehen die App-Version nicht.
 
+## Korrektur v1.7-r6 – 26.10.2026
+- Separate Schriftausgabe vollstaendig entfernt.
+- Wortkontur ist Teil derselben Zeichenschleife und derselben Fallspalten wie der Regen.
+- Regen-Zeichengroesse skaliert mit Wortlaenge, damit das Wort in den Bildschirm passt.
+- Offline-Cache aktualisiert.
+
 ## Korrektur v1.7-r5 – 26.10.2026
 - Gravur-/Relief-Effekt: Wortzeichen werden in den laufenden Regen-Spalten mit den Streams synchron gerendert.
 - Leuchten wird beim Vorbeifliessen von Regenkopf und -schweif intensiviert; Grundhelligkeit fuer Lesbarkeit.
