@@ -62,7 +62,7 @@ for(const key of Object.keys(messageDefaults))document.getElementById(key).addEv
 document.querySelector('#clearMessage').onclick=()=>{messageSettings.message='';messageClock=0;invalidateMask();syncMessageControls();saveMessage();resize();history.replaceState(null,'',location.pathname+location.hash);document.querySelector('#shareStatus').textContent='Normaler Matrix-Regen aktiviert.';};
 document.querySelector('#share').onclick=async()=>{const entries=messageSettings.message.trim().split(/\n|\|/).map(x=>x.trim()).filter(Boolean);if(!entries.length){document.querySelector('#shareStatus').textContent='Zuerst eine Nachricht eingeben.';return;}const url=new URL(location.href);url.search='';url.searchParams.set('msg',entries.join(' '));url.searchParams.set('style',messageSettings.messageStyle);url.searchParams.set('hold',messageSettings.hold);url.searchParams.set('fade',messageSettings.fade);url.searchParams.set('gap',messageSettings.gap);url.searchParams.set('width',messageSettings.wordSize);try{await navigator.clipboard.writeText(url.href);document.querySelector('#shareStatus').textContent='Link kopiert: '+url.href;}catch{document.querySelector('#shareStatus').textContent='Link zum Kopieren: '+url.href;}};
 
-let wordCells=[],wordBox=null,wordLookup=new Set(),wordBounds=null;
+let wordCells=[],wordBox=null,wordLookup=new Set(),wordBounds=null,letterMemory=new Map(),lastWordIndex=-1;
 const FONT5={"0":["01110","10011","10101","10101","11001","10001","01110"],"1":["010","110","010","010","010","010","111"],"2":["11110","00001","00001","01110","10000","10000","11111"],"3":["11110","00001","00001","01110","00001","00001","11110"],"4":["10010","10010","10010","11111","00010","00010","00010"],"5":["11111","10000","10000","11110","00001","00001","11110"],"6":["01111","10000","10000","11110","10001","10001","01110"],"7":["11111","00001","00010","00100","01000","01000","01000"],"8":["01110","10001","10001","01110","10001","10001","01110"],"9":["01110","10001","10001","01111","00001","00001","11110"],"A":["01110","11011","10001","11111","10001","10001","10001"],"B":["11110","10001","10001","11110","10001","10001","11110"],"C":["01111","11000","10000","10000","10000","11000","01111"],"D":["11110","10001","10001","10001","10001","10001","11110"],"E":["11111","10000","10000","11110","10000","10000","11111"],"F":["11111","10000","10000","11110","10000","10000","10000"],"G":["01111","10000","10000","10111","10001","10001","01111"],"H":["10001","10001","10001","11111","10001","10001","10001"],"I":["111","010","010","010","010","010","111"],"J":["00111","00010","00010","00010","10010","10010","01100"],"K":["10001","10010","10100","11000","10100","10010","10001"],"L":["10000","10000","10000","10000","10000","10000","11111"],"M":["10001","11011","10101","10101","10001","10001","10001"],"N":["10001","11001","10101","10011","10001","10001","10001"],"O":["01110","10001","10001","10001","10001","10001","01110"],"P":["11110","10001","10001","11110","10000","10000","10000"],"Q":["01110","10001","10001","10001","10101","10010","01101"],"R":["11110","10001","10001","11110","10100","10010","10001"],"S":["01111","10000","10000","01110","00001","00001","11110"],"T":["11111","00100","00100","00100","00100","00100","00100"],"U":["10001","10001","10001","10001","10001","10001","01110"],"V":["10001","10001","10001","10001","10001","01010","00100"],"W":["10001","10001","10001","10101","10101","10101","01010"],"X":["10001","10001","01010","00100","01010","10001","10001"],"Y":["10001","10001","01010","00100","00100","00100","00100"],"Z":["11111","00001","00010","00100","01000","10000","11111"],"-":["000","000","000","111","000","000","000"],".":["0","0","0","0","0","1","1"],"!":["1","1","1","1","1","0","1"],"?":["1110","0001","0001","0110","0100","0000","0100"],":":["0","1","1","0","1","1","0"],"Ä":["01010","00000","01110","11011","11111","10001","10001"],"Ö":["01010","00000","01110","10001","10001","10001","01110"],"Ü":["01010","00000","10001","10001","10001","10001","01110"],"É":["00100","00010","11111","10000","11110","10000","11111"]};
 function buildMask(txt){
  const key=txt+'|'+messageSettings.wordSize+'|'+font;
@@ -116,12 +116,12 @@ const chars='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz@#$%&
  const dpr=Math.min(devicePixelRatio||1,2);
  canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);
  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.textBaseline='top';
- const rainDensity=settings.density*1.9;
+ const rainDensity=settings.density*2.35;
  cols=Array.from({length:Math.ceil(w/font*rainDensity/100)},(_,i)=>({
   x:i*font*100/rainDensity,y:rand(-h,h),speed:rand(55,185),
-  length:rand(43,75)|0,glyphs:Array.from({length:150},pick)
+  length:rand(75,115)|0,glyphs:Array.from({length:150},pick)
  }));
- ctx.fillStyle='#000';ctx.fillRect(0,0,w,h);invalidateMask();
+ ctx.fillStyle='#000';ctx.fillRect(0,0,w,h);letterMemory.clear();invalidateMask();
 }
 function wave(x,t,k){return(t*(k?37:49)+k*h*.46)%(h+220)-110+Math.sin(x*.014+t*(k?-.52:.65)+k*2)*30+Math.sin(x*.032-t*.3)*11}function draw(now){
  requestAnimationFrame(draw);
@@ -131,8 +131,9 @@ function wave(x,t,k){return(t*(k?37:49)+k*h*.46)%(h+220)-110+Math.sin(x*.014+t*(
  last=now;time+=dt;messageClock+=dt;
  const phase=messagePhase();
  if(phase)buildMask(phase.text);
+ if(!phase||phase.index!==lastWordIndex){letterMemory.clear();lastWordIndex=phase?phase.index:-1;}
  // Keep the ordinary rain fade: no horizontal clipping and no black word band.
- ctx.fillStyle='rgba(0,0,0,'+(.13*Math.pow(3,(settings.space-50)/50))+')';
+ ctx.fillStyle='rgba(0,0,0,'+(.075*Math.pow(3,(settings.space-50)/50))+')';
  ctx.fillRect(0,0,w,h);
  ctx.font=font+'px monospace';ctx.textBaseline='top';
  const top=phase?wordBounds.top:0,bottom=phase?wordBounds.bottom:0;
@@ -153,6 +154,9 @@ function wave(x,t,k){return(t*(k?37:49)+k*h*.46)%(h+220)-110+Math.sin(x*.014+t*(
    const a=Math.pow(1-j/length,1.35);
    const letter=!!(phase&&phase.stage!=='gap'&&wordLookup.has(ci+','+row));
    const filled=letter&&(phase.stage==='fill'?row<=frontier:phase.stage==='hold'?true:row>frontier);
+   const memoryKey=ci+','+row;
+   if(filled)letterMemory.set(memoryKey,{glyph:c.glyphs[index],stamp:time});
+   else if(phase&&phase.stage==='wash'&&letter&&row<=frontier)letterMemory.delete(memoryKey);
    if(filled){
     // Brighten ONLY the actual letter cell; all surrounding rain is untouched.
     const rim=phase.stage!=='hold'&&Math.abs(row-frontier)<1.4;
@@ -168,6 +172,23 @@ function wave(x,t,k){return(t*(k?37:49)+k*h*.46)%(h+220)-110+Math.sin(x*.014+t*(
    ctx.fillText(c.glyphs[index],c.x,y);
   }
   ctx.shadowBlur=0;
+ }
+ // Long-lived afterglow is limited strictly to already illuminated letter pixels.
+ // It is cleared progressively during washing; background rain remains independent.
+ if(phase&&phase.stage!=='gap'){
+  ctx.save();ctx.font=font+'px monospace';
+  for(const [key,item] of letterMemory){
+   const [ci,row]=key.split(',').map(Number);
+   const filled=phase.stage==='fill'?row<=wordBounds.top+(wordBounds.bottom-wordBounds.top)*phase.progress:
+    phase.stage==='hold'||(phase.stage==='wash'&&row>wordBounds.top+(wordBounds.bottom-wordBounds.top)*phase.progress);
+   if(!filled){letterMemory.delete(key);continue;}
+   const age=time-item.stamp;
+   const glow=.69+.28*Math.exp(-age/4.5);
+   ctx.fillStyle='rgba(97,255,137,'+glow+')';
+   ctx.shadowColor='rgba(70,255,120,.50)';ctx.shadowBlur=Math.min(4,font*.5);
+   ctx.fillText(item.glyph,cols[ci].x,row*font);
+  }
+  ctx.restore();
  }
  ctx.shadowBlur=0;
 }
