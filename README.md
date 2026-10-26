@@ -3,7 +3,10 @@
 **Produktiver Stand:** v1.7 (26.10.2026)  
 **Live:** https://vorzueglich.github.io/matrix-regen/
 
-## Funktionen\n- Matrix-Wortanimation mit ausgefuellten Glyphen, Umrissen oder Geisterschrift; Ein-/Ausblenden, Haltezeit und Pausen konfigurierbar\n- Nachrichten-Link ueber URL-Parameter `msg`, `style`, `hold`, `fade`, `gap`; mehrere Nachrichten durch Pipe (`|`) getrennt\n- Leeres Nachrichtenfeld: unveraenderter Regen; Einstellungen bleiben lokal gespeichert
+## Funktionen
+- Grosse, stabile ASCII-Zeichen bilden ein Wort nach dem anderen; Hintergrund-Regen laeuft weiter. Umrisse/Geisterschrift sowie Ein-/Ausblenden, Haltezeit und Pausen konfigurierbar
+- Nachrichten-Link ueber URL-Parameter `msg`, `style`, `hold`, `fade`, `gap`; mehrere Nachrichten durch Pipe (`|`) getrennt
+- Leeres Nachrichtenfeld: unveraenderter Regen; Einstellungen bleiben lokal gespeichert
 - Bildschirmfuellender gruener ASCII-Matrix-Regen mit hellen Koepfen und Nachleuchten
 - Einstellungsmenue mit Reglern fuer Dichte, Zeichengroesse, Fallgeschwindigkeit und Leerraum
 - Sofortige Vorschau, lokale Speicherung und Zuruecksetzen auf die v1.4-Standardwerte
@@ -17,7 +20,7 @@ In Safari die [Website](https://vorzueglich.github.io/matrix-regen/) oeffnen →
 ## Projektdateien
 - `index.html`: HTML, CSS und JavaScript fuer die Canvas-Animation
 - `manifest.webmanifest`: PWA-Metadaten
-- `sw.js`: Offline-Cache (aktuell `matrix-regen-v1.7`)
+- `sw.js`: Offline-Cache (aktuell `matrix-regen-v1.7-r2`)
 - `icon.svg`: App-Symbol
 - `CHANGELOG.md`: Aenderungshistorie
 
@@ -29,7 +32,8 @@ Keine externen Bibliotheken. Hosting: GitHub Pages, Branch `main`, Ordner `/ (ro
 ## Versionen
 | Version | Stand | Aenderung |
 | --- | --- | --- |
-| **v1.7** | 26.10.2026, produktiv | Matrix-Nachrichten, Animationszeiten und Teilen per Link; leer = normaler Regen |\n| **v1.6** | 25.10.2026, produktiv | Online immer aktuelle Seite, Offline-Fallback, automatisches Neuladen bei Worker-Update |
+| **v1.7** | 26.10.2026, produktiv | Ueberarbeitete Wort-fuer-Wort-ASCII-Grossschrift, Animationszeiten, Teilen per Link; leer = normaler Regen |
+| **v1.6** | 25.10.2026, produktiv | Online immer aktuelle Seite, Offline-Fallback, automatisches Neuladen bei Worker-Update |
 | **v1.5** | 25.10.2026 | Einstellungsmenue mit vier Reglern, lokalen Einstellungen und Reset; v1.4-Optik als Standard |
 | **v1.4** | 25.10.2026 | Schwarze Wellenbalken entfernt, kleinere Zeichen, laengere Streams, laengeres Nachleuchten, hoehere Dichte |
 | **v1.3** | 25.10.2026 | Schnellere Zeichenwechsel, etwas langsamere Bewegung, dichter |
@@ -58,4 +62,6 @@ Mehr Leerraum verkuerzt die Schweife und beschleunigt das Verblassen. Dichte und
 
 ### Update-Korrektur v1.6
 Navigationen laden online zuerst vom Netzwerk ohne HTTP-Cache und verwenden offline die zuletzt gespeicherte Seite. Der neue Service Worker befuellt seinen Cache ohne alte HTTP-Cache-Inhalte. Bei einem Worker-Wechsel laedt eine bereits kontrollierte App einmal automatisch neu. Alte v1.4-Installationen gegebenenfalls zweimal neu laden: einmal fuer das Worker-Update, danach fuer die neue Seite. Gespeicherte Einstellungen bleiben erhalten.
-\n## Nachrichten in v1.7\nIn **Einstellungen** Nachrichten zeilenweise erfassen. Jede Zeile wird nacheinander angezeigt. Haltezeit standardmaessig 10 s, Ein- und Ausblenden je 3 s, Pause 5 s. Anzeige gefuellt, Umriss oder Geisterschrift. **Nachrichten-Link kopieren** erstellt einen teilbaren Link; Empfaenger erhalten die konfigurierte Animation ohne Anmeldung. Beispiel: `https://vorzueglich.github.io/matrix-regen/?msg=Krise-N%20H%C3%B6ck%20am%20Mittwoch`. Inhalte stehen lesbar in der URL (keine vertraulichen Nachrichten). URL-Parameter ueberschreiben beim Oeffnen die lokal gespeicherte Nachricht, nicht aber die allgemeinen Regeneinstellungen.\n
+
+## Nachrichten in v1.7
+In **Einstellungen** Nachrichten zeilenweise erfassen. Worte werden automatisch getrennt und nacheinander angezeigt. Haltezeit standardmaessig 2.5 s, Ein- und Ausblenden je 0.8 s, Pause 0.3 s. Anzeige gefuellt, Umriss oder Geisterschrift. **Nachrichten-Link kopieren** erstellt einen teilbaren Link; Empfaenger erhalten die konfigurierte Animation ohne Anmeldung. Beispiel: `https://vorzueglich.github.io/matrix-regen/?msg=Krise-N%20H%C3%B6ck%20am%20Mittwoch`. Inhalte stehen lesbar in der URL (keine vertraulichen Nachrichten). URL-Parameter ueberschreiben beim Oeffnen die lokal gespeicherte Nachricht, nicht aber die allgemeinen Regeneinstellungen.
