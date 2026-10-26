@@ -80,7 +80,7 @@ function buildMask(txt){
   }
  }
  const total=columns.length,top=Math.floor((h/font-7*vertical)/2);
- const target=Math.min(Math.floor(cols.length*messageSettings.wordSize/100),Math.max(total,Math.round(total*1.65)));
+ const target=Math.min(Math.floor(cols.length*messageSettings.wordSize/100),Math.max(total,Math.round(total*1.9)));
  const expanded=Array.from({length:target},(_,i)=>columns[Math.min(total-1,Math.floor(i*total/target))]);
  const left=Math.max(0,Math.floor((cols.length-target)/2));
  wordLookup=new Set();
@@ -116,7 +116,7 @@ const chars='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz@#$%&
  const dpr=Math.min(devicePixelRatio||1,2);
  canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);
  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.textBaseline='top';
- const rainDensity=settings.density*1.65;
+ const rainDensity=settings.density*1.9;
  cols=Array.from({length:Math.ceil(w/font*rainDensity/100)},(_,i)=>({
   x:i*font*100/rainDensity,y:rand(-h,h),speed:rand(55,185),
   length:rand(43,75)|0,glyphs:Array.from({length:150},pick)
@@ -131,46 +131,48 @@ function wave(x,t,k){return(t*(k?37:49)+k*h*.46)%(h+220)-110+Math.sin(x*.014+t*(
  last=now;time+=dt;messageClock+=dt;
  const phase=messagePhase();
  if(phase)buildMask(phase.text);
- // Full repaint avoids ghost trails underneath the text (the area is deliberately dry).
  ctx.fillStyle='#000';ctx.fillRect(0,0,w,h);
  ctx.font=font+'px monospace';ctx.textBaseline='top';
  const top=phase?wordBounds.top:Math.ceil(h/font)+1;
  const bottom=phase?wordBounds.bottom:top;
- const span=Math.max(1,bottom-top);
+ const height=Math.max(1,bottom-top);
  for(let ci=0;ci<cols.length;ci++){
-  const c=cols[ci],length=Math.max(1,Math.round(c.length*Math.pow(2,(50-settings.space)/50)));
+  const c=cols[ci];
+  const length=Math.max(1,Math.round(c.length*Math.pow(2,(50-settings.space)/50)));
   c.y+=c.speed*settings.speed/100*dt;
   if(c.y-length*font>h+30)c.y=rand(-120,-20);
   const head=Math.floor(c.y/font);
-  // Real continuous Matrix rain exists only ABOVE the word. Below is completely black.
+  // The same continuous columns rain from the top into the letter-shaped reservoir.
   for(let j=0;j<length;j++){
-   const row=head-j,y=row*font;
-   if(row<0||row>=top||y>h)continue;
-   if(Math.random()<.45)c.glyphs[j%c.glyphs.length]=pick();
+   const row=head-j;
+   if(row<0||row>=top)continue;
    const a=Math.pow(1-j/length,1.35);
+   if(Math.random()<.45)c.glyphs[j%c.glyphs.length]=pick();
+   ctx.shadowBlur=0;
    ctx.fillStyle=j===0?'#e4ffe9':j<4?'rgba(91,255,133,'+a+')':
-    'rgba(13,'+Math.round(85+130*a)+',43,'+Math.max(.25,a*.95)+')';
-   ctx.fillText(c.glyphs[j%c.glyphs.length],c.x,y);
+    'rgba(13,'+Math.round(85+130*a)+',43,'+Math.max(.24,a*.94)+')';
+   ctx.fillText(c.glyphs[j%c.glyphs.length],c.x,row*font);
   }
   if(!phase||phase.stage==='gap'||ci<wordBounds.left||ci>=wordBounds.right)continue;
-  // Rain collects only inside the engraved letter cells: a top-down fluid fill.
-  // Afterwards the rain washes it away from top to bottom.
-  const wiggle=Math.sin(ci*.72+time*2.1)*.22;
-  const fillEdge=top+phase.progress*span+wiggle;
-  const washEdge=top+phase.progress*span+wiggle;
+  // Animated waterline: the word fills from above, stays bright, then gets washed away.
+  const wobble=.22*Math.sin(ci*.37+time*3);
+  const frontier=top+height*phase.progress+wobble;
+  const lastRain=head>=top-2&&head<=bottom+length;
   for(let row=top;row<bottom;row++){
    if(!wordLookup.has(ci+','+row))continue;
-   const wet=phase.stage==='fill'?row<=fillEdge:
-    phase.stage==='hold'?true:row>washEdge;
-   if(!wet)continue;
-   const distance=phase.stage==='fill'?Math.abs(row-fillEdge):Math.abs(row-washEdge);
-   const rim=distance<1.5;
-   const idx=((row+Math.floor(time*5)+ci*7)%c.glyphs.length+c.glyphs.length)%c.glyphs.length;
-   if(Math.random()<.15)c.glyphs[idx]=pick();
-   ctx.shadowColor='rgba(70,255,120,.5)';
-   ctx.shadowBlur=rim?Math.min(7,font*.8):Math.min(3,font*.25);
-   ctx.fillStyle=rim?'#e0ffe5':'rgba(94,255,131,.94)';
-   ctx.fillText(c.glyphs[idx],c.x,row*font);
+   const inside=phase.stage==='fill'?row<=frontier:
+     phase.stage==='hold'?true:row>frontier;
+   if(!inside)continue;
+   const nearEdge=phase.stage!=='hold'&&Math.abs(row-frontier)<1.4;
+   // Continue each stream's characters into the same column of the lettering.
+   const moving=(Math.floor(time*9)+ci*13-row)%c.glyphs.length;
+   const index=(moving+c.glyphs.length)%c.glyphs.length;
+   if(Math.random()<.13)c.glyphs[index]=pick();
+   const pulse=.90+.10*Math.sin(time*3.2+ci*.27+row*.18);
+   ctx.shadowColor='rgba(60,255,115,.68)';
+   ctx.shadowBlur=nearEdge?Math.min(7,font*.75):Math.min(3,font*.3);
+   ctx.fillStyle=nearEdge?'#eaffee':'rgba(80,255,119,'+pulse+')';
+   ctx.fillText(c.glyphs[index],c.x,row*font);
   }
   ctx.shadowBlur=0;
  }
