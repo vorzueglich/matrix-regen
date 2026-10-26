@@ -1,4 +1,4 @@
-const CACHE='matrix-regen-v1.7-r2';
+const CACHE='matrix-regen-v1.7-r3';
 const FILES=['./','./index.html','./manifest.webmanifest','./icon.svg'];
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>Promise.all(FILES.map(async path=>{
