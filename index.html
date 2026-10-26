@@ -9,7 +9,7 @@ label{display:block;margin-top:18px}output{float:right}
 input[type=range]{display:block;width:100%;min-height:44px;margin:4px 0;accent-color:#63ff88}
 .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}
 input[type=text],input[type=number],textarea,select{box-sizing:border-box;width:100%;background:#020b04;color:#c5ffd1;border:1px solid #28683a;border-radius:9px;padding:10px;font:inherit}textarea{min-height:70px;resize:vertical}.small{opacity:.8;font-size:12px}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid #dfffe4;outline-offset:3px}
-</style></head><body><canvas id="rain" aria-label="Animierter gruener Matrix-Regen"></canvas><div id="ui"><button id="pause">Pause</button><span id="status">Matrix · v1.7</span><button id="settingsButton" aria-haspopup="dialog">Einstellungen</button><button id="info" aria-label="Hilfe">?</button></div><section id="help" hidden><h2>Matrix Regen</h2><p>Auf dem iPhone in Safari: Teilen → Zum Home-Bildschirm → Hinzufuegen. Ueber das neue Icon startet Matrix ohne Safari-Leisten.</p><p>Tippe auf den Regen, um die Bedienung ein- oder auszublenden. Pause haelt die Animation an. Unter Einstellungen lassen sich Dichte, Zeichengroesse, Geschwindigkeit und Leerraum anpassen und auf den v1.4-Standard zuruecksetzen. In v1.7 koennen Woerter und Nachrichten eingeblendet und als URL-Link geteilt werden. Eine leere Nachricht bedeutet normalen Regen. Hoch- und Querformat werden automatisch angepasst.</p><p>Wenn «Offline bereit» angezeigt wird, sind die benoetigten Dateien gespeichert. iOS kann diesen Speicher bei Platzmangel loeschen.</p><button id="close">Schliessen</button></section><dialog id="settings" aria-labelledby="settingsTitle">
+</style></head><body><canvas id="rain" aria-label="Animierter gruener Matrix-Regen"></canvas><div id="ui"><button id="pause">Pause</button><span id="status">Matrix · v1.7</span><button id="settingsButton" aria-haspopup="dialog">Einstellungen</button><button id="info" aria-label="Hilfe">?</button></div><section id="help" hidden><h2>Matrix Regen</h2><p>Auf dem iPhone in Safari: Teilen → Zum Home-Bildschirm → Hinzufuegen. Ueber das neue Icon startet Matrix ohne Safari-Leisten.</p><p>Tippe auf den Regen, um die Bedienung ein- oder auszublenden. Pause haelt die Animation an. Unter Einstellungen lassen sich Dichte, Zeichengroesse, Geschwindigkeit und Leerraum anpassen und auf den v1.4-Standard zuruecksetzen. In v1.7 koennen grosse Woerter aus Matrix-Zeichen ohne schwarze Hintergrundflaeche eingeblendet und als URL-Link geteilt werden. Eine leere Nachricht bedeutet normalen Regen. Hoch- und Querformat werden automatisch angepasst.</p><p>Wenn «Offline bereit» angezeigt wird, sind die benoetigten Dateien gespeichert. iOS kann diesen Speicher bei Platzmangel loeschen.</p><button id="close">Schliessen</button></section><dialog id="settings" aria-labelledby="settingsTitle">
 <h2 id="settingsTitle">Einstellungen</h2>
 <p>Alle Regler wirken sofort. Standard entspricht v1.4.</p>
 <label for="density">Regendichte <output id="densityValue" for="density"></output></label>
@@ -66,34 +66,44 @@ let wordCells=[],wordBox=null;
 function buildMask(txt){
  if(maskText===txt&&maskMode===messageSettings.messageStyle&&maskW===w&&maskH===h)return;
  maskText=txt;maskMode=messageSettings.messageStyle;maskW=w;maskH=h;
- const cell=Math.max(8,Math.min(12,font*.94)),colsX=Math.max(8,Math.floor(w/cell)-2),rowsY=Math.max(8,Math.floor(h/cell*.34));
- const maxW=colsX*cell,maxH=rowsY*cell;
+ // Build big, thick letter silhouettes, then replace filled pixels with fixed Matrix glyphs.
+ // No background rectangle: the original rain remains visible everywhere.
+ const cell=Math.max(8,Math.min(12,font*.96));
+ const maxW=Math.floor(w*.94/cell)*cell;
+ const maxH=Math.floor(Math.min(h*.33,w*.60)/cell)*cell;
  const m=maskCtx;
- maskCanvas.width=Math.ceil(maxW);maskCanvas.height=Math.ceil(maxH);
+ maskCanvas.width=Math.max(1,Math.round(maxW));
+ maskCanvas.height=Math.max(1,Math.round(maxH));
  m.clearRect(0,0,maskCanvas.width,maskCanvas.height);
- let size=Math.min(maxH*.94,maxW/Math.max(1,txt.length)*1.7);
- size=Math.max(10,size);
+ const cx=maskCanvas.width/2,cy=maskCanvas.height/2;
+ let size=Math.min(maxH*.90,maxW*.68);
  m.textAlign='center';m.textBaseline='middle';m.lineJoin='round';
- do{m.font='900 '+size+'px system-ui, sans-serif';if(m.measureText(txt).width<=maxW*.96)break;size-=1;}while(size>10);
+ while(size>12){
+   m.font='900 '+size+'px system-ui,Arial,sans-serif';
+   if(m.measureText(txt).width<=maxW*.96)break;
+   size-=1;
+ }
+ m.font='900 '+Math.max(12,size)+'px system-ui,Arial,sans-serif';
  if(messageSettings.messageStyle==='outline'){
-   m.strokeStyle='#fff';m.lineWidth=Math.max(cell*1.15,size*.12);
-   m.strokeText(txt,maxW/2,maxH/2,maxW*.95);
+   m.strokeStyle='#fff';m.lineWidth=Math.max(cell*1.15,size*.075);
+   m.strokeText(txt,cx,cy);
  }else{
-   m.fillStyle='#fff';m.fillText(txt,maxW/2,maxH/2,maxW*.95);
+   m.fillStyle='#fff';m.fillText(txt,cx,cy);
  }
  const data=m.getImageData(0,0,maskCanvas.width,maskCanvas.height).data;
  wordCells=[];
  const ox=(w-maxW)/2,oy=(h-maxH)/2;
- const seedText='ABCDEFGHJKLMNPQRSTUVWXYZ0123456789@#$%&';
- for(let iy=0;iy<rowsY;iy++)for(let ix=0;ix<colsX;ix++){
-   const px=Math.min(maskCanvas.width-1,Math.floor((ix+.5)*cell));
-   const py=Math.min(maskCanvas.height-1,Math.floor((iy+.5)*cell));
-   let hits=0;
-   for(const [dx,dy] of [[0,0],[-cell*.24,0],[cell*.24,0],[0,-cell*.24],[0,cell*.24]]){
-     const xx=clamp(Math.round(px+dx),0,maskCanvas.width-1),yy=clamp(Math.round(py+dy),0,maskCanvas.height-1);
-     if(data[(yy*maskCanvas.width+xx)*4+3]>60)hits++;
-   }
-   if(hits>0)wordCells.push({x:ox+ix*cell,y:oy+iy*cell,glyph:seedText[Math.random()*seedText.length|0],bright:Math.random(),order:Math.random()});
+ const seedText='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ@#$%&';
+ const nx=Math.floor(maxW/cell),ny=Math.floor(maxH/cell);
+ for(let iy=0;iy<ny;iy++)for(let ix=0;ix<nx;ix++){
+  const px=Math.min(maskCanvas.width-1,Math.floor((ix+.5)*cell));
+  const py=Math.min(maskCanvas.height-1,Math.floor((iy+.5)*cell));
+  let hits=0;
+  for(const [dx,dy] of [[0,0],[-cell*.26,0],[cell*.26,0],[0,-cell*.26],[0,cell*.26]]){
+   const xx=clamp(Math.round(px+dx),0,maskCanvas.width-1),yy=clamp(Math.round(py+dy),0,maskCanvas.height-1);
+   if(data[(yy*maskCanvas.width+xx)*4+3]>60)hits++;
+  }
+  if(hits>=1)wordCells.push({x:ox+ix*cell,y:oy+iy*cell,glyph:seedText[Math.random()*seedText.length|0],bright:Math.random(),order:Math.random()});
  }
  wordBox={x:ox,y:oy,width:maxW,height:maxH,cell};
 }
@@ -109,16 +119,17 @@ function renderWord(phase){
  buildMask(phase.text);
  const alpha=phase.strength,cell=wordBox.cell;
  ctx.save();
- // Text area is darkened to keep the matrix glyph silhouette readable.
- ctx.fillStyle='rgba(0,0,0,'+(alpha*.89)+')';
- ctx.fillRect(wordBox.x-cell,wordBox.y-cell,wordBox.width+cell*2,wordBox.height+cell*2);
- ctx.font='bold '+(cell*.96)+'px monospace';
+ ctx.font='900 '+(cell*1.08)+'px monospace';
  ctx.textBaseline='top';
+ ctx.shadowColor='rgba(60,255,105,'+(alpha*.85)+')';
+ ctx.shadowBlur=cell*.55;
  for(const p of wordCells){
-   if(p.order>Math.min(1,alpha*1.8))continue;
-   const flicker=messageSettings.messageStyle==='ghost'?.70+.14*Math.sin(time*2.8+p.bright*8):1;
-   ctx.fillStyle=p.bright>.9?'rgba(225,255,230,'+(alpha*flicker)+')':'rgba(84,255,124,'+(alpha*.98*flicker)+')';
-   ctx.fillText(p.glyph,p.x,p.y);
+  // Stable characters with staggered emergence, not randomized each frame.
+  if(p.order>Math.min(1,alpha*1.7))continue;
+  const shimmer=messageSettings.messageStyle==='ghost'?.72+.18*Math.sin(time*2+p.bright*9):.94+.06*Math.sin(time*1.3+p.bright*10);
+  const a=alpha*shimmer;
+  ctx.fillStyle=p.bright>.87?'rgba(225,255,230,'+a+')':'rgba(90,255,125,'+a+')';
+  ctx.fillText(p.glyph,p.x,p.y);
  }
  ctx.restore();
 }
