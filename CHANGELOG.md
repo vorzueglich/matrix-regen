@@ -2,6 +2,12 @@
 
 Versionierung: **Major.Minor**. Neue App-Versionen mit kurzer Aenderungsuebersicht; Dokumentationsaenderungen allein erhoehen die App-Version nicht.
 
+## Umsetzung v1.7-r11 – 26.10.2026
+- Bestätigte 8-Phasen-Bildidee implementiert: Regen führt zur Wortzone, füllt die Buchstaben, hält 1 s, wäscht sie weg.
+- Regenspalten auf 190 % der eingestellten Dichte erhöht und Wortbreite mitgezogen.
+- Unterhalb des Wortes bleibt die Fläche komplett schwarz; Bildschirmlayout ohne Hintergrundblock.
+- Version bleibt v1.7; Offline-Cache erneuert.
+
 ## Anpassung v1.7-r10 – 26.10.2026
 - 65 % mehr Regenspalten nebeneinander, auch fuer bestehende gespeicherte Dichtewerte.
 - Wortbreite entsprechend auf mehr Regenspalten aufgeteilt.
