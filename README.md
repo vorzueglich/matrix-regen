@@ -89,3 +89,6 @@ Neue Wortanimation: kontinuierlicher Regen oberhalb des Wortes, unten keine Rege
 
 ### Anpassung v1.7-r10 (26.10.2026)
 Regen horizontal rund 65 % dichter (auch bei lokal gespeicherter Dichte 100 %). Die Wortmaske wird proportional auf die zusaetzlichen Regenspalten verteilt, damit Wortbreite und Erkennbarkeit erhalten bleiben. Fuellen, Halten und Wegspuelen unveraendert.
+
+### v1.7-r11 – Umsetzung Bildfolge (26.10.2026)
+Visueller Ablauf gemäss bestätigter Skizze: sehr dichter Matrix-Regen über der Wortzone, darunter schwarz. Die Buchstabensilhouette wird Zeile für Zeile durch weiterfliessende Glyphen derselben Spalten gefüllt, für eine Sekunde gehalten und von oben nach unten ausgewaschen. Ausserhalb der Wortzone unterhalb keine Glyphen. Eine einzige Animation auf dem Canvas, weiterhin v1.7. Regen-Dichte-Faktor 1.9, adaptive Wortbreite, URL-Teilen und Einstellungen erhalten.
