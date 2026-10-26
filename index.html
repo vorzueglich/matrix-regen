@@ -131,10 +131,11 @@ function wave(x,t,k){return(t*(k?37:49)+k*h*.46)%(h+220)-110+Math.sin(x*.014+t*(
  last=now;time+=dt;messageClock+=dt;
  const phase=messagePhase();
  if(phase)buildMask(phase.text);
- ctx.fillStyle='#000';ctx.fillRect(0,0,w,h);
+ // Keep the ordinary rain fade: no horizontal clipping and no black word band.
+ ctx.fillStyle='rgba(0,0,0,'+(.13*Math.pow(3,(settings.space-50)/50))+')';
+ ctx.fillRect(0,0,w,h);
  ctx.font=font+'px monospace';ctx.textBaseline='top';
- const top=phase?wordBounds.top:Math.ceil(h/font)+1;
- const bottom=phase?wordBounds.bottom:top;
+ const top=phase?wordBounds.top:0,bottom=phase?wordBounds.bottom:0;
  const height=Math.max(1,bottom-top);
  for(let ci=0;ci<cols.length;ci++){
   const c=cols[ci];
@@ -142,36 +143,29 @@ function wave(x,t,k){return(t*(k?37:49)+k*h*.46)%(h+220)-110+Math.sin(x*.014+t*(
   c.y+=c.speed*settings.speed/100*dt;
   if(c.y-length*font>h+30)c.y=rand(-120,-20);
   const head=Math.floor(c.y/font);
-  // The same continuous columns rain from the top into the letter-shaped reservoir.
+  const frontier=top+height*(phase?phase.progress:0)+.22*Math.sin(ci*.37+time*3);
+  // Every rain column continues to the bottom, regardless of the word.
   for(let j=0;j<length;j++){
-   const row=head-j;
-   if(row<0||row*font>h)continue;
+   const row=head-j,y=row*font;
+   if(row<0||y>h)continue;
+   const index=j%c.glyphs.length;
+   if(Math.random()<.45)c.glyphs[index]=pick();
    const a=Math.pow(1-j/length,1.35);
-   if(Math.random()<.45)c.glyphs[j%c.glyphs.length]=pick();
-   ctx.shadowBlur=0;
-   ctx.fillStyle=j===0?'#e4ffe9':j<4?'rgba(91,255,133,'+a+')':
-    'rgba(13,'+Math.round(85+130*a)+',43,'+Math.max(.24,a*.94)+')';
-   ctx.fillText(c.glyphs[j%c.glyphs.length],c.x,row*font);
-  }
-  if(!phase||phase.stage==='gap'||ci<wordBounds.left||ci>=wordBounds.right)continue;
-  // Animated waterline: the word fills from above, stays bright, then gets washed away.
-  const wobble=.22*Math.sin(ci*.37+time*3);
-  const frontier=top+height*phase.progress+wobble;
-  for(let row=top;row<bottom;row++){
-   if(!wordLookup.has(ci+','+row))continue;
-   const inside=phase.stage==='fill'?row<=frontier:
-     phase.stage==='hold'?true:row>frontier;
-   if(!inside)continue;
-   const nearEdge=phase.stage!=='hold'&&Math.abs(row-frontier)<1.4;
-   // Continue each stream's characters into the same column of the lettering.
-   const moving=(Math.floor(time*9)+ci*13-row)%c.glyphs.length;
-   const index=(moving+c.glyphs.length)%c.glyphs.length;
-   if(Math.random()<.13)c.glyphs[index]=pick();
-   const pulse=.90+.10*Math.sin(time*3.2+ci*.27+row*.18);
-   ctx.shadowColor='rgba(60,255,115,.68)';
-   ctx.shadowBlur=nearEdge?Math.min(7,font*.75):Math.min(3,font*.3);
-   ctx.fillStyle=nearEdge?'#eaffee':'rgba(80,255,119,'+pulse+')';
-   ctx.fillText(c.glyphs[index],c.x,row*font);
+   const letter=!!(phase&&phase.stage!=='gap'&&wordLookup.has(ci+','+row));
+   const filled=letter&&(phase.stage==='fill'?row<=frontier:phase.stage==='hold'?true:row>frontier);
+   if(filled){
+    // Brighten ONLY the actual letter cell; all surrounding rain is untouched.
+    const rim=phase.stage!=='hold'&&Math.abs(row-frontier)<1.4;
+    const pulse=.91+.09*Math.sin(time*3.2+ci*.27+row*.18);
+    ctx.fillStyle=rim?'#eaffee':'rgba(80,255,119,'+pulse+')';
+    ctx.shadowColor='rgba(60,255,115,.65)';
+    ctx.shadowBlur=rim?Math.min(7,font*.75):Math.min(3,font*.3);
+   }else{
+    ctx.shadowBlur=0;
+    ctx.fillStyle=j===0?'#e4ffe9':j<4?'rgba(91,255,133,'+a+')':
+      'rgba(13,'+Math.round(85+130*a)+',43,'+Math.max(.24,a*.94)+')';
+   }
+   ctx.fillText(c.glyphs[index],c.x,y);
   }
   ctx.shadowBlur=0;
  }
