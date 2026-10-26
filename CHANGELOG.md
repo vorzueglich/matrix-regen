@@ -2,6 +2,12 @@
 
 Versionierung: **Major.Minor**. Neue App-Versionen mit kurzer Aenderungsuebersicht; Dokumentationsaenderungen allein erhoehen die App-Version nicht.
 
+## Korrektur v1.7-r4 – 26.10.2026
+- Schlanke Bitmap-Zeichen statt breiter Font-Maske, mit zwei Rasterspalten Zeichenabstand.
+- Neue Einstellung maximale Wortbreite (50–100 %, Standard 95 %), automatische Skalierung auch langer Woerter.
+- Umlaute mit separaten Punkten und unveraenderter Matrix-Regen im Hintergrund.
+- Offline-Cache aktualisiert, Hauptversion bleibt v1.7.
+
 ## Korrektur v1.7-r3 – 26.10.2026
 - Vollflaechige schwarze Abdunkelung entfernt; Matrix-Regen bleibt hinter der Schrift sichtbar.
 - Grosse dicke Buchstaben werden aus stabilen ASCII-Zeichen aufgebaut, mit sanftem gruenem Leuchten.
