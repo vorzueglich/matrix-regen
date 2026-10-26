@@ -20,7 +20,7 @@ In Safari die [Website](https://vorzueglich.github.io/matrix-regen/) oeffnen →
 ## Projektdateien
 - `index.html`: HTML, CSS und JavaScript fuer die Canvas-Animation
 - `manifest.webmanifest`: PWA-Metadaten
-- `sw.js`: Offline-Cache (aktuell `matrix-regen-v1.7-r7`)
+- `sw.js`: Offline-Cache (aktuell `matrix-regen-v1.7-r8`)
 - `icon.svg`: App-Symbol
 - `CHANGELOG.md`: Aenderungshistorie
 
@@ -80,3 +80,6 @@ Das Wort wird ausschliesslich von Zeichen der laufenden Regenspalten gebildet. K
 
 ### Korrektur v1.7-r7
 Fehlerhafte einzeilige Wortband-Darstellung korrigiert: Buchstaben jetzt 14 Regenzeichen-Zeilen hoch, mit je zwei Spalten Abstand. Kein separater Textlayer; bestehende Fallzeichen werden innerhalb der Letter-Maske beleuchtet, unmittelbare Nicht-Buchstaben-Zellen erhalten reduzierten Kontrast. Anpassung der Regen-Zeichengroesse nur soweit noetig, damit das laengste Wort in die eingestellte Breite passt.
+
+### Korrektur v1.7-r8
+Nur vorhandene Zeichen der bewegten Regenkoepfe und -schweife werden gezeichnet. Die unsichtbare Wortmaske moduliert innerhalb einer einzigen Regenschleife Helligkeit und Leuchten, ausserhalb unveraenderter Regen. Leere Regenspuren bleiben leer: keine ergaenzten Glyphen oder zweite Zeichenebene. Wirkung der Wortkontur haengt bewusst von der aktuellen Regenbelegung ab.
