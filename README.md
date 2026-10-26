@@ -20,7 +20,7 @@ In Safari die [Website](https://vorzueglich.github.io/matrix-regen/) oeffnen →
 ## Projektdateien
 - `index.html`: HTML, CSS und JavaScript fuer die Canvas-Animation
 - `manifest.webmanifest`: PWA-Metadaten
-- `sw.js`: Offline-Cache (aktuell `matrix-regen-v1.7-r3`)
+- `sw.js`: Offline-Cache (aktuell `matrix-regen-v1.7-r4`)
 - `icon.svg`: App-Symbol
 - `CHANGELOG.md`: Aenderungshistorie
 
@@ -68,3 +68,6 @@ In **Einstellungen** Nachrichten zeilenweise erfassen. Worte werden automatisch 
 
 ### Korrektur v1.7-r3 (26.10.2026)
 Kein schwarzes Textrechteck mehr: grosse, vollstaendig aus stabilen, gruen leuchtenden ASCII-Zeichen gebildete Buchstaben bei durchgehend sichtbarem Regen. Schrift wird an Bildschirmbreite und Wortlaenge angepasst. Versionsnummer bleibt v1.7.
+
+### Korrektur v1.7-r4 (26.10.2026)
+Zeichenraster mit schlanken 5x7-Buchstaben und mindestens zwei leeren Rasterspalten zwischen Buchstaben, Umlaut-Punkten als separate Glyphen; automatische Breitenanpassung an das Fenster. Einstellung 'Maximale Wortbreite' (50–100 %, Standard 95 %) ist speicherbar und wird als URL-Parameter `width` geteilt. Keine schwarze Hintergrundflaeche.
