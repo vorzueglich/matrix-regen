@@ -58,43 +58,38 @@ document.querySelector('#settingsButton').onclick=()=>{document.querySelector('#
 document.querySelector('#settingsClose').onclick=()=>panel.close();
 document.querySelector('#reset').onclick=()=>{settings={...defaults};messageSettings={...messageDefaults};messageClock=0;syncControls();syncMessageControls();saveSettings();saveMessage();invalidateMask();resize();};
 syncControls();syncMessageControls();
-for(const key of Object.keys(messageDefaults))document.getElementById(key).addEventListener('input',e=>{messageSettings[key]=key==='message'?cleanMessage(e.target.value):key==='messageStyle'?e.target.value:clamp(Number(e.target.value)||0,key==='hold'?.5:key==='fade'?.2:key==='wordSize'?50:0,key==='hold'?60:key==='fade'?15:key==='wordSize'?100:30);messageClock=0;invalidateMask();syncMessageControls();saveMessage();});
-document.querySelector('#clearMessage').onclick=()=>{messageSettings.message='';messageClock=0;invalidateMask();syncMessageControls();saveMessage();history.replaceState(null,'',location.pathname+location.hash);document.querySelector('#shareStatus').textContent='Normaler Matrix-Regen aktiviert.';};
+for(const key of Object.keys(messageDefaults))document.getElementById(key).addEventListener('input',e=>{messageSettings[key]=key==='message'?cleanMessage(e.target.value):key==='messageStyle'?e.target.value:clamp(Number(e.target.value)||0,key==='hold'?.5:key==='fade'?.2:key==='wordSize'?50:0,key==='hold'?60:key==='fade'?15:key==='wordSize'?100:30);messageClock=0;invalidateMask();syncMessageControls();saveMessage();if(key==='message'||key==='wordSize')resize();});
+document.querySelector('#clearMessage').onclick=()=>{messageSettings.message='';messageClock=0;invalidateMask();syncMessageControls();saveMessage();resize();history.replaceState(null,'',location.pathname+location.hash);document.querySelector('#shareStatus').textContent='Normaler Matrix-Regen aktiviert.';};
 document.querySelector('#share').onclick=async()=>{const entries=messageSettings.message.trim().split(/\n|\|/).map(x=>x.trim()).filter(Boolean);if(!entries.length){document.querySelector('#shareStatus').textContent='Zuerst eine Nachricht eingeben.';return;}const url=new URL(location.href);url.search='';url.searchParams.set('msg',entries.join(' '));url.searchParams.set('style',messageSettings.messageStyle);url.searchParams.set('hold',messageSettings.hold);url.searchParams.set('fade',messageSettings.fade);url.searchParams.set('gap',messageSettings.gap);url.searchParams.set('width',messageSettings.wordSize);try{await navigator.clipboard.writeText(url.href);document.querySelector('#shareStatus').textContent='Link kopiert: '+url.href;}catch{document.querySelector('#shareStatus').textContent='Link zum Kopieren: '+url.href;}};
 
-let wordCells=[],wordBox=null,wordColumns=[];
+let wordCells=[],wordBox=null,wordLookup=new Set(),wordBounds=null;
 const FONT5={"0":["01110","10011","10101","10101","11001","10001","01110"],"1":["010","110","010","010","010","010","111"],"2":["11110","00001","00001","01110","10000","10000","11111"],"3":["11110","00001","00001","01110","00001","00001","11110"],"4":["10010","10010","10010","11111","00010","00010","00010"],"5":["11111","10000","10000","11110","00001","00001","11110"],"6":["01111","10000","10000","11110","10001","10001","01110"],"7":["11111","00001","00010","00100","01000","01000","01000"],"8":["01110","10001","10001","01110","10001","10001","01110"],"9":["01110","10001","10001","01111","00001","00001","11110"],"A":["01110","11011","10001","11111","10001","10001","10001"],"B":["11110","10001","10001","11110","10001","10001","11110"],"C":["01111","11000","10000","10000","10000","11000","01111"],"D":["11110","10001","10001","10001","10001","10001","11110"],"E":["11111","10000","10000","11110","10000","10000","11111"],"F":["11111","10000","10000","11110","10000","10000","10000"],"G":["01111","10000","10000","10111","10001","10001","01111"],"H":["10001","10001","10001","11111","10001","10001","10001"],"I":["111","010","010","010","010","010","111"],"J":["00111","00010","00010","00010","10010","10010","01100"],"K":["10001","10010","10100","11000","10100","10010","10001"],"L":["10000","10000","10000","10000","10000","10000","11111"],"M":["10001","11011","10101","10101","10001","10001","10001"],"N":["10001","11001","10101","10011","10001","10001","10001"],"O":["01110","10001","10001","10001","10001","10001","01110"],"P":["11110","10001","10001","11110","10000","10000","10000"],"Q":["01110","10001","10001","10001","10101","10010","01101"],"R":["11110","10001","10001","11110","10100","10010","10001"],"S":["01111","10000","10000","01110","00001","00001","11110"],"T":["11111","00100","00100","00100","00100","00100","00100"],"U":["10001","10001","10001","10001","10001","10001","01110"],"V":["10001","10001","10001","10001","10001","01010","00100"],"W":["10001","10001","10001","10101","10101","10101","01010"],"X":["10001","10001","01010","00100","01010","10001","10001"],"Y":["10001","10001","01010","00100","00100","00100","00100"],"Z":["11111","00001","00010","00100","01000","10000","11111"],"-":["000","000","000","111","000","000","000"],".":["0","0","0","0","0","1","1"],"!":["1","1","1","1","1","0","1"],"?":["1110","0001","0001","0110","0100","0000","0100"],":":["0","1","1","0","1","1","0"],"Ä":["01010","00000","01110","11011","11111","10001","10001"],"Ö":["01010","00000","01110","10001","10001","10001","01110"],"Ü":["01010","00000","10001","10001","10001","10001","01110"],"É":["00100","00010","11111","10000","11110","10000","11111"]};
 function buildMask(txt){
- const key=txt+'|'+messageSettings.wordSize;
+ const key=txt+'|'+messageSettings.wordSize+'|'+font;
  if(maskText===key&&maskMode===messageSettings.messageStyle&&maskW===w&&maskH===h)return;
  maskText=key;maskMode=messageSettings.messageStyle;maskW=w;maskH=h;
- // Bitmap-Glyphs guarantee 2 empty character-columns between letters.
  const glyphs=Array.from(txt.toLocaleUpperCase('de-CH')).map(ch=>FONT5[ch]||FONT5[ch.normalize('NFD').charAt(0)]||FONT5['?']);
- const gap=2,strokeWidth=2;
- const units=glyphs.reduce((n,g)=>n+g[0].length*strokeWidth+gap,0)-gap;
- const budget=w*messageSettings.wordSize/100;
- const cell=Math.min(Math.max(5,font*.9),budget/Math.max(units,1),(h*.31)/7);
- const effective=Math.max(.7,cell),width=units*effective,height=7*effective;
- const left=(w-width)/2,top=(h-height)/2;
- const seed='0123456789ABCDEFGHJKLMNPQRSTUVWXYZ@#$%&';
- wordCells=[];let col=0;
- glyphs.forEach(g=>{
-  for(let row=0;row<7;row++)for(let x=0;x<g[row].length;x++){
-   if(g[row][x]!=='1')continue;
-   for(let dx=0;dx<strokeWidth;dx++){
-    const column=col+x*strokeWidth+dx;
-    const outline=messageSettings.messageStyle==='outline';
-    const edge=row===0||row===6||x===0||x===g[row].length-1||!g[row-1]?.[x]||g[row-1][x]!=='1'||!g[row+1]?.[x]||g[row+1][x]!=='1';
-    if(outline&&!edge)continue;
-    wordCells.push({x:left+column*effective,y:top+row*effective,glyph:seed[Math.random()*seed.length|0],bright:Math.random(),order:Math.random()});
-   }
-  }
-  col+=g[0].length*strokeWidth+gap;
+ const gap=2,strokeWidth=1;
+ const bits=[];
+ glyphs.forEach((g,gi)=>{
+  const ww=g[0].length;
+  if(gi)for(let i=0;i<gap;i++)bits.push(Array(7).fill(false));
+  for(let x=0;x<ww;x++)bits.push(Array.from({length:7},(_,y)=>g[y][x]==='1'));
  });
- wordBox={cell:effective,width,height,x:left,y:top};
- // Map glyph relief onto the same moving rain columns, not a separate text layer.
- wordColumns=cols.map(()=>[]);
- for(const p of wordCells){let nearest=0,d=Infinity;for(let i=0;i<cols.length;i++){const diff=Math.abs((cols[i].x+font*.3)-(p.x+effective*.4));if(diff<d){d=diff;nearest=i;}}wordColumns[nearest].push(p);}
+ const n=bits.length;
+ const spacing=w/Math.max(1,cols.length);
+ // Every pixel belongs to a real falling stream and actual existing rain row.
+ const left=Math.max(0,Math.floor((cols.length-n)/2)),top=Math.floor((h/font-7)/2);
+ wordLookup=new Set();
+ for(let x=0;x<bits.length;x++)for(let y=0;y<7;y++){
+  if(!bits[x][y])continue;
+  if(messageSettings.messageStyle==='outline'){
+   const edge= !bits[x-1]?.[y]||!bits[x+1]?.[y]||!bits[x]?.[y-1]||!bits[x]?.[y+1];
+   if(!edge)continue;
+  }
+  wordLookup.add((left+x)+','+(top+y));
+ }
+ wordBounds={left,right:left+n,top,bottom:top+7};
 }
 function messagePhase(){
  const a=lines();if(!a.length)return null;
@@ -103,61 +98,52 @@ function messagePhase(){
  const strength=t<f?t/f:t<f+hold?1:t<2*f+hold?1-(t-f-hold)/f:0;
  return {text:a[index],strength:clamp(strength,0,1)};
 }
-function drawRainRelief(c,index,phase,head,length){
- if(!phase||phase.strength<=0)return;
- const cells=wordColumns[index];if(!cells||!cells.length)return;
- const alpha=phase.strength;
- const cell=wordBox.cell;
- ctx.save();
- ctx.font='bold '+Math.max(1,cell*.98)+'px monospace';
- ctx.textBaseline='top';
- for(const p of cells){
-  // Each glyph is carried by its actual rain stream. Its brightness rises
-  // where the falling head/trail crosses the letter's raised surface.
-  const row=p.y/font;
-  const distance=head-row;
-  const trail=distance>=0&&distance<=length?Math.pow(1-distance/Math.max(1,length),.58):0;
-  const nearHead=distance>=0&&distance<4?1:0;
-  const breathing=.10+.04*Math.sin(time*1.4+p.bright*8);
-  const illumination=clamp(breathing+trail*.78+nearHead*.18,0,1);
-  const base=messageSettings.messageStyle==='ghost'?.45:.72;
-  const opacity=alpha*(base+illumination*.27);
-  // Characters are anchored to the engraving, but look alive because their
-  // colour follows the moving trail rather than appearing all at once.
-  ctx.shadowColor='rgba(85,255,125,'+(alpha*trail*.65)+')';
-  ctx.shadowBlur=trail*cell*.65;
-  ctx.fillStyle=nearHead?'rgba(226,255,232,'+opacity+')':
-    'rgba('+(78+Math.round(trail*63))+',255,'+(109+Math.round(trail*38))+','+opacity+')';
-  ctx.fillText(p.glyph,p.x,p.y);
- }
- ctx.restore();
-}
-const chars='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz@#$%&*+-=<>/\\\\|[]{}:;!?',rand=(a,b)=>a+Math.random()*(b-a),pick=()=>chars[Math.random()*chars.length|0];function resize(){w=innerWidth;h=innerHeight;font=(w<500?11:13)*settings.size/100;const dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.textBaseline='top';cols=Array.from({length:Math.ceil(w/font*settings.density/100)},(_,i)=>({x:i*font*100/settings.density,y:rand(-h,h),speed:rand(55,185),length:rand(43,75)|0,glyphs:Array.from({length:150},pick)}));ctx.fillStyle='#000';ctx.fillRect(0,0,w,h);invalidateMask()}function wave(x,t,k){return(t*(k?37:49)+k*h*.46)%(h+220)-110+Math.sin(x*.014+t*(k?-.52:.65)+k*2)*30+Math.sin(x*.032-t*.3)*11}function draw(now){
+const chars='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz@#$%&*+-=<>/\\\\|[]{}:;!?',rand=(a,b)=>a+Math.random()*(b-a),pick=()=>chars[Math.random()*chars.length|0];function resize(){w=innerWidth;h=innerHeight;const baseline=(w<500?11:13)*settings.size/100;let maxUnits=0;for(const word of lines()){const n=Array.from(word.toLocaleUpperCase('de-CH')).reduce((v,ch)=>v+(FONT5[ch]?.[0].length||5)+2,0)-2;maxUnits=Math.max(maxUnits,n);}font=maxUnits?Math.min(baseline,w*messageSettings.wordSize/100/Math.max(1,maxUnits)):baseline;font=Math.max(3,font);const dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.textBaseline='top';cols=Array.from({length:Math.ceil(w/font*settings.density/100)},(_,i)=>({x:i*font*100/settings.density,y:rand(-h,h),speed:rand(55,185),length:rand(43,75)|0,glyphs:Array.from({length:150},pick)}));ctx.fillStyle='#000';ctx.fillRect(0,0,w,h);invalidateMask()}function wave(x,t,k){return(t*(k?37:49)+k*h*.46)%(h+220)-110+Math.sin(x*.014+t*(k?-.52:.65)+k*2)*30+Math.sin(x*.032-t*.3)*11}function draw(now){
  requestAnimationFrame(draw);
  if(!running||document.hidden){last=now;return;}
  if(now-last<32)return;
  const dt=Math.min((now-last)/1000,.07)||.033;
  last=now;time+=dt;messageClock+=dt;
+ const phase=messagePhase();
+ if(phase&&phase.strength>0)buildMask(phase.text);
  ctx.fillStyle='rgba(0,0,0,'+(.13*Math.pow(3,(settings.space-50)/50))+')';
  ctx.fillRect(0,0,w,h);
  ctx.font=font+'px monospace';
- const phase=messagePhase();
- if(phase&&phase.strength>0)buildMask(phase.text);
- for(let ci=0;ci<cols.length;ci++){const c=cols[ci];
-  const length=Math.max(1,Math.round(c.length*Math.pow(2,(50-settings.space)/50)));
+ for(let ci=0;ci<cols.length;ci++){
+  const c=cols[ci],length=Math.max(1,Math.round(c.length*Math.pow(2,(50-settings.space)/50)));
   c.y+=c.speed*settings.speed/100*dt;
   if(c.y-length*font>h+30)c.y=rand(-120,-20);
   const head=Math.floor(c.y/font);
-  for(let j=0;j<length;j++){
-   const y=(head-j)*font;if(y<0||y>h)continue;
-   if(Math.random()<.45)c.glyphs[j]=pick();
-   const a=Math.pow(1-j/length,1.35);
-   ctx.fillStyle=j===0?'#dfffe4':j<4?'rgba(91,255,133,'+a+')':'rgba(13,'+Math.round(85+130*a)+',43,'+Math.max(.25,a*.95)+')';
-   ctx.fillText(c.glyphs[j],c.x,y);
+  const active=!!(phase&&phase.strength>0&&wordBounds&&ci>=wordBounds.left&&ci<wordBounds.right);
+  const start=active?Math.min(head,wordBounds.top):head;
+  const end=active?Math.max(head-length+1,wordBounds.bottom-1):head-length+1;
+  // ONE rendering path: all characters are flowing rain, including letter cells.
+  for(let row=start;row>=end;row--){
+   const y=row*font;if(y<0||y>h)continue;
+   const j=head-row,trail=j>=0&&j<length;
+   const hit=active&&wordLookup.has(ci+','+row);
+   const within=active&&row>=wordBounds.top&&row<wordBounds.bottom;
+   if(!trail&&!within)continue;
+   // Rain glyphs scroll through the fixed engraving, never anchored to letter cells.
+   const glyphIndex=((head-row)%c.glyphs.length+c.glyphs.length)%c.glyphs.length;
+   if(Math.random()<(hit?.12:.45))c.glyphs[glyphIndex]=pick();
+   const glyph=c.glyphs[glyphIndex];
+   const tail=trail?Math.pow(1-j/length,1.35):0;
+   if(hit){
+    const brightness=phase.strength*(.73+Math.max(.12,tail)*.25);
+    ctx.fillStyle='rgba('+(trail&&j<3?225:92)+',255,'+(trail&&j<3?230:140)+','+brightness+')';
+    ctx.shadowColor='rgba(80,255,125,'+(phase.strength*.5)+')';
+    ctx.shadowBlur=Math.min(4,font*.42);
+   }else{
+    ctx.shadowBlur=0;
+    // All non-letter pixels keep the original rain; the small band remains subdued.
+    if(!trail){ctx.fillStyle='rgba(12,82,36,'+(within?phase.strength*.17:0)+')';}
+    else ctx.fillStyle=j===0?'#dfffe4':j<4?'rgba(91,255,133,'+tail+')':'rgba(13,'+Math.round(85+130*tail)+',43,'+Math.max(.25,tail*.95)+')';
+   }
+   ctx.fillText(glyph,c.x,y);
   }
-  drawRainRelief(c,ci,phase,head,length);
  }
-
+ ctx.shadowBlur=0;
 }
 pause.onclick=()=>{running=!running;pause.textContent=running?'Pause':'Weiter';last=performance.now()};canvas.onclick=()=>ui.hidden=!ui.hidden;document.querySelector('#info').onclick=()=>document.querySelector('#help').hidden=false;document.querySelector('#close').onclick=()=>document.querySelector('#help').hidden=true;addEventListener('resize',resize);resize();requestAnimationFrame(draw);if('serviceWorker'in navigator){let refreshing=false;const hadController=!!navigator.serviceWorker.controller;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(hadController&&!refreshing){refreshing=true;location.reload();}});navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(async r=>{r.update().catch(()=>{});await navigator.serviceWorker.ready;if(r.active)document.querySelector('#status').textContent='Offline bereit · v1.7'}).catch(()=>document.querySelector('#status').textContent='Online · v1.7');}})();
 </script></body></html>
