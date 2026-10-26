@@ -2,6 +2,11 @@
 
 Versionierung: **Major.Minor**. Neue App-Versionen mit kurzer Aenderungsuebersicht; Dokumentationsaenderungen allein erhoehen die App-Version nicht.
 
+## Korrektur v1.7-r8 – 26.10.2026
+- Nur reale Regenzeichen rendern; kuenstliche Zeichen in Wortzellen ausserhalb des aktuellen Schweifs entfernt.
+- Wortmaske steuert ausschliesslich Helligkeit und Glow bereits vorhandener Zeichen.
+- Leere Stellen bleiben leer, es gibt keinen zweiten Schrift-Pass.
+
 ## Korrektur v1.7-r7 – 26.10.2026
 - Sieben-Zeilen-Miniband aus Nutzerscreenshot behoben: Bitmap-Buchstaben auf 14 Regenzeilen vergroessert.
 - Skalierungslogik korrigiert, damit lange Woerter nicht sinnlos winzig erscheinen.
