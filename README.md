@@ -20,7 +20,7 @@ In Safari die [Website](https://vorzueglich.github.io/matrix-regen/) oeffnen →
 ## Projektdateien
 - `index.html`: HTML, CSS und JavaScript fuer die Canvas-Animation
 - `manifest.webmanifest`: PWA-Metadaten
-- `sw.js`: Offline-Cache (aktuell `matrix-regen-v1.7-r2`)
+- `sw.js`: Offline-Cache (aktuell `matrix-regen-v1.7-r3`)
 - `icon.svg`: App-Symbol
 - `CHANGELOG.md`: Aenderungshistorie
 
@@ -65,3 +65,6 @@ Navigationen laden online zuerst vom Netzwerk ohne HTTP-Cache und verwenden offl
 
 ## Nachrichten in v1.7
 In **Einstellungen** Nachrichten zeilenweise erfassen. Worte werden automatisch getrennt und nacheinander angezeigt. Haltezeit standardmaessig 2.5 s, Ein- und Ausblenden je 0.8 s, Pause 0.3 s. Anzeige gefuellt, Umriss oder Geisterschrift. **Nachrichten-Link kopieren** erstellt einen teilbaren Link; Empfaenger erhalten die konfigurierte Animation ohne Anmeldung. Beispiel: `https://vorzueglich.github.io/matrix-regen/?msg=Krise-N%20H%C3%B6ck%20am%20Mittwoch`. Inhalte stehen lesbar in der URL (keine vertraulichen Nachrichten). URL-Parameter ueberschreiben beim Oeffnen die lokal gespeicherte Nachricht, nicht aber die allgemeinen Regeneinstellungen.
+
+### Korrektur v1.7-r3 (26.10.2026)
+Kein schwarzes Textrechteck mehr: grosse, vollstaendig aus stabilen, gruen leuchtenden ASCII-Zeichen gebildete Buchstaben bei durchgehend sichtbarem Regen. Schrift wird an Bildschirmbreite und Wortlaenge angepasst. Versionsnummer bleibt v1.7.
