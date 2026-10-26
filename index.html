@@ -69,27 +69,27 @@ function buildMask(txt){
  if(maskText===key&&maskMode===messageSettings.messageStyle&&maskW===w&&maskH===h)return;
  maskText=key;maskMode=messageSettings.messageStyle;maskW=w;maskH=h;
  const glyphs=Array.from(txt.toLocaleUpperCase('de-CH')).map(ch=>FONT5[ch]||FONT5[ch.normalize('NFD').charAt(0)]||FONT5['?']);
- const gap=2,strokeWidth=1;
- const bits=[];
- glyphs.forEach((g,gi)=>{
-  const ww=g[0].length;
-  if(gi)for(let i=0;i<gap;i++)bits.push(Array(7).fill(false));
-  for(let x=0;x<ww;x++)bits.push(Array.from({length:7},(_,y)=>g[y][x]==='1'));
- });
- const n=bits.length;
- const spacing=w/Math.max(1,cols.length);
- // Every pixel belongs to a real falling stream and actual existing rain row.
- const left=Math.max(0,Math.floor((cols.length-n)/2)),top=Math.floor((h/font-7)/2);
+ const gap=2,vertical=2;
+ const columns=[];
+ for(const glyph of glyphs){
+  if(columns.length)for(let i=0;i<gap;i++)columns.push(Array(7*vertical).fill(false));
+  for(let x=0;x<glyph[0].length;x++){
+   const column=[];
+   for(let y=0;y<7;y++)for(let k=0;k<vertical;k++)column.push(glyph[y][x]==='1');
+   columns.push(column);
+  }
+ }
+ const total=columns.length,top=Math.floor((h/font-7*vertical)/2);
+ const left=Math.max(0,Math.floor((cols.length-total)/2));
  wordLookup=new Set();
- for(let x=0;x<bits.length;x++)for(let y=0;y<7;y++){
-  if(!bits[x][y])continue;
+ for(let x=0;x<total;x++)for(let y=0;y<7*vertical;y++){
+  if(!columns[x][y])continue;
   if(messageSettings.messageStyle==='outline'){
-   const edge= !bits[x-1]?.[y]||!bits[x+1]?.[y]||!bits[x]?.[y-1]||!bits[x]?.[y+1];
-   if(!edge)continue;
+    if(columns[x-1]?.[y]&&columns[x+1]?.[y]&&columns[x]?.[y-1]&&columns[x]?.[y+1])continue;
   }
   wordLookup.add((left+x)+','+(top+y));
  }
- wordBounds={left,right:left+n,top,bottom:top+7};
+ wordBounds={left,right:left+total,top,bottom:top+7*vertical};
 }
 function messagePhase(){
  const a=lines();if(!a.length)return null;
@@ -98,7 +98,27 @@ function messagePhase(){
  const strength=t<f?t/f:t<f+hold?1:t<2*f+hold?1-(t-f-hold)/f:0;
  return {text:a[index],strength:clamp(strength,0,1)};
 }
-const chars='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz@#$%&*+-=<>/\\\\|[]{}:;!?',rand=(a,b)=>a+Math.random()*(b-a),pick=()=>chars[Math.random()*chars.length|0];function resize(){w=innerWidth;h=innerHeight;const baseline=(w<500?11:13)*settings.size/100;let maxUnits=0;for(const word of lines()){const n=Array.from(word.toLocaleUpperCase('de-CH')).reduce((v,ch)=>v+(FONT5[ch]?.[0].length||5)+2,0)-2;maxUnits=Math.max(maxUnits,n);}font=maxUnits?Math.min(baseline,w*messageSettings.wordSize/100/Math.max(1,maxUnits)):baseline;font=Math.max(3,font);const dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.textBaseline='top';cols=Array.from({length:Math.ceil(w/font*settings.density/100)},(_,i)=>({x:i*font*100/settings.density,y:rand(-h,h),speed:rand(55,185),length:rand(43,75)|0,glyphs:Array.from({length:150},pick)}));ctx.fillStyle='#000';ctx.fillRect(0,0,w,h);invalidateMask()}function wave(x,t,k){return(t*(k?37:49)+k*h*.46)%(h+220)-110+Math.sin(x*.014+t*(k?-.52:.65)+k*2)*30+Math.sin(x*.032-t*.3)*11}function draw(now){
+const chars='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz@#$%&*+-=<>/\\\\|[]{}:;!?',rand=(a,b)=>a+Math.random()*(b-a),pick=()=>chars[Math.random()*chars.length|0];function resize(){
+ w=innerWidth;h=innerHeight;
+ const baseline=(w<500?11:13)*settings.size/100;
+ let maxUnits=0;
+ for(const word of lines()){
+  const symbols=Array.from(word.toLocaleUpperCase('de-CH'));
+  const n=symbols.reduce((v,ch)=>v+(FONT5[ch]?.[0].length||5),0)+Math.max(0,symbols.length-1)*2;
+  maxUnits=Math.max(maxUnits,n);
+ }
+ const fit=maxUnits?w*messageSettings.wordSize/100/maxUnits:baseline;
+ font=Math.max(4,Math.min(baseline,fit));
+ const dpr=Math.min(devicePixelRatio||1,2);
+ canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);
+ ctx.setTransform(dpr,0,0,dpr,0,0);ctx.textBaseline='top';
+ cols=Array.from({length:Math.ceil(w/font*settings.density/100)},(_,i)=>({
+  x:i*font*100/settings.density,y:rand(-h,h),speed:rand(55,185),
+  length:rand(43,75)|0,glyphs:Array.from({length:150},pick)
+ }));
+ ctx.fillStyle='#000';ctx.fillRect(0,0,w,h);invalidateMask();
+}
+function wave(x,t,k){return(t*(k?37:49)+k*h*.46)%(h+220)-110+Math.sin(x*.014+t*(k?-.52:.65)+k*2)*30+Math.sin(x*.032-t*.3)*11}function draw(now){
  requestAnimationFrame(draw);
  if(!running||document.hidden){last=now;return;}
  if(now-last<32)return;
@@ -117,30 +137,29 @@ const chars='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz@#$%&
   const active=!!(phase&&phase.strength>0&&wordBounds&&ci>=wordBounds.left&&ci<wordBounds.right);
   const start=active?Math.max(head,wordBounds.bottom-1):head;
   const end=active?Math.min(head-length+1,wordBounds.top):head-length+1;
-  // ONE rendering path: all characters are flowing rain, including letter cells.
   for(let row=start;row>=end;row--){
    const y=row*font;if(y<0||y>h)continue;
    const j=head-row,trail=j>=0&&j<length;
-   const hit=active&&wordLookup.has(ci+','+row);
    const within=active&&row>=wordBounds.top&&row<wordBounds.bottom;
-   if(!trail&&!within)continue;
-   // Rain glyphs scroll through the fixed engraving, never anchored to letter cells.
+   const hit=within&&wordLookup.has(ci+','+row);
+   if(!trail&&!hit)continue;
    const glyphIndex=((head-row)%c.glyphs.length+c.glyphs.length)%c.glyphs.length;
-   if(Math.random()<(hit?.12:.45))c.glyphs[glyphIndex]=pick();
-   const glyph=c.glyphs[glyphIndex];
+   if(Math.random()<(hit?.08:.45))c.glyphs[glyphIndex]=pick();
    const tail=trail?Math.pow(1-j/length,1.35):0;
    if(hit){
-    const brightness=phase.strength*(.73+Math.max(.12,tail)*.25);
-    ctx.fillStyle='rgba('+(trail&&j<3?225:92)+',255,'+(trail&&j<3?230:140)+','+brightness+')';
-    ctx.shadowColor='rgba(80,255,125,'+(phase.strength*.5)+')';
-    ctx.shadowBlur=Math.min(4,font*.42);
+    // A rain character brightens where its stream meets the raised letter.
+    const light=phase.strength*(.83+.15*tail);
+    ctx.fillStyle='rgba('+(trail&&j<3?210:92)+',255,'+(trail&&j<3?221:135)+','+light+')';
+    ctx.shadowColor='rgba(72,255,123,'+(phase.strength*.5)+')';
+    ctx.shadowBlur=Math.min(3,font*.4);
    }else{
     ctx.shadowBlur=0;
-    // All non-letter pixels keep the original rain; the small band remains subdued.
-    if(!trail){ctx.fillStyle='rgba(12,82,36,'+(within?phase.strength*.17:0)+')';}
-    else ctx.fillStyle=j===0?'#dfffe4':j<4?'rgba(91,255,133,'+tail+')':'rgba(13,'+Math.round(85+130*tail)+',43,'+Math.max(.25,tail*.95)+')';
+    const reduction=within?(1-phase.strength*.68):1;
+    ctx.fillStyle=j===0?'rgba(220,255,230,'+reduction+')':
+      j<4?'rgba(91,255,133,'+(tail*reduction)+')':
+      'rgba(13,'+Math.round(85+130*tail)+',43,'+(Math.max(.25,tail*.95)*reduction)+')';
    }
-   ctx.fillText(glyph,c.x,y);
+   ctx.fillText(c.glyphs[glyphIndex],c.x,y);
   }
  }
  ctx.shadowBlur=0;
