@@ -20,7 +20,7 @@ In Safari die [Website](https://vorzueglich.github.io/matrix-regen/) oeffnen →
 ## Projektdateien
 - `index.html`: HTML, CSS und JavaScript fuer die Canvas-Animation
 - `manifest.webmanifest`: PWA-Metadaten
-- `sw.js`: Offline-Cache (aktuell `matrix-regen-v1.7-r5`)
+- `sw.js`: Offline-Cache (aktuell `matrix-regen-v1.7-r6`)
 - `icon.svg`: App-Symbol
 - `CHANGELOG.md`: Aenderungshistorie
 
@@ -74,3 +74,6 @@ Zeichenraster mit schlanken 5x7-Buchstaben und mindestens zwei leeren Rasterspal
 
 ### Korrektur v1.7-r5 (26.10.2026)
 Relief-Integration: Wortzeichen sind festen Regen-Spalten zugeordnet. Die laufenden Regenkoepfe und -schweife steuern lokal deren Leuchtintensitaet und Glow. Kein schwarzer Hintergrund, keine separate Text-Overlay-Schleife; lesbare Grundhelligkeit bleibt erhalten.
+
+### Korrektur v1.7-r6
+Das Wort wird ausschliesslich von Zeichen der laufenden Regenspalten gebildet. Keine separate Wortzeichen-Ebene; Regenraster skaliert automatisch mit der Laenge des laengsten Wortes. In der Wort-Maske erscheinen die vorhandenen Fallzeichen heller.
