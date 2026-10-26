@@ -2,6 +2,11 @@
 
 Versionierung: **Major.Minor**. Neue App-Versionen mit kurzer Aenderungsuebersicht; Dokumentationsaenderungen allein erhoehen die App-Version nicht.
 
+## Korrektur v1.7-r12 – 26.10.2026
+- Regen nicht mehr an der Wortoberkante abschneiden: vertikaler Matrix-Regen fliesst wieder ueber die gesamte Seite.
+- Wort bleibt als aufgefuellte helle Zeichenform erkennbar; Fuellen, 1-s-Halten und Auswaschen unveraendert.
+- Version v1.7 beibehalten, PWA-Cache erneuert.
+
 ## Umsetzung v1.7-r11 – 26.10.2026
 - Bestätigte 8-Phasen-Bildidee implementiert: Regen führt zur Wortzone, füllt die Buchstaben, hält 1 s, wäscht sie weg.
 - Regenspalten auf 190 % der eingestellten Dichte erhöht und Wortbreite mitgezogen.
