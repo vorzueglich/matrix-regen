@@ -20,7 +20,7 @@ In Safari die [Website](https://vorzueglich.github.io/matrix-regen/) oeffnen →
 ## Projektdateien
 - `index.html`: HTML, CSS und JavaScript fuer die Canvas-Animation
 - `manifest.webmanifest`: PWA-Metadaten
-- `sw.js`: Offline-Cache (aktuell `matrix-regen-v1.7-r12`)
+- `sw.js`: Offline-Cache (aktuell `matrix-regen-v1.7-r13`)
 - `icon.svg`: App-Symbol
 - `CHANGELOG.md`: Aenderungshistorie
 
@@ -95,3 +95,6 @@ Visueller Ablauf gemäss bestätigter Skizze: sehr dichter Matrix-Regen über de
 
 ### v1.7-r12 – Durchgehender Regen (26.10.2026)
 Regen laeuft wieder ueber die ganze Bildschirmausdehnung, auch unterhalb und hinter dem Wort. Die Wortfuellung / 1-s-Haltephase / Auswaschphase bleibt als heller Glypheneffekt erhalten. Keine vertikale Abschneidung des normalen Regens an der Wort-Oberkante.
+
+### Korrektur v1.7-r13 – Regen in allen Zwischenraeumen (26.10.2026)
+Nur noch ein Zeichendurchgang je Regenspalte und Regenzeichen. Die Füll- und Auswaschmaske wirkt nur auf echte Buchstabenzellen; links/rechts der Woerter, in Buchstabeninnenraeumen, zwischen Buchstaben und unterhalb laufen die urspruenglichen Tropfen durch. Ohne Nachricht unveraenderter Fullscreen-Regen. Nachleuchten wie beim urspruenglichen Regen aktiviert.
