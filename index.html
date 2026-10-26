@@ -25,10 +25,10 @@ input[type=text],input[type=number],textarea,select{box-sizing:border-box;width:
 <label for="message">Nachricht (automatisch Wort fuer Wort)</label>
 <textarea id="message" maxlength="600" placeholder="Leer = normaler Matrix-Regen"></textarea>
 <label for="wordSize">Maximale Wortbreite <output id="wordSizeValue">95 %</output></label><input id="wordSize" type="range" min="50" max="100" step="5" value="95"><p class="small">Lange Woerter passen automatisch auf den Bildschirm. 100 % nutzt die verfuegbare Breite.</p><label for="messageStyle">Darstellung</label><select id="messageStyle"><option value="filled">Ausgefuellte Zeichen</option><option value="outline">Umrisse</option><option value="ghost">Geisterschrift</option></select>
-<label for="hold">Sichtbar pro Wort (Sekunden)</label><input id="hold" type="number" min="0.5" max="60" step="0.5" value="2.5">
-<label for="fade">Ein-/Ausblenden (Sekunden)</label><input id="fade" type="number" min="0.5" max="15" step="0.5" value="0.8">
-<label for="gap">Pause zwischen Woertern (Sekunden)</label><input id="gap" type="number" min="0" max="30" value="0.3">
-<p class="small">Jedes Wort erscheint einzeln in schlanker 5x7-Matrix-Schrift, mit mindestens 2 Rasterspalten Abstand. Der Matrix-Regen laeuft dahinter weiter.</p>
+<label for="hold">Wartezeit bei vollem Wort (Sekunden)</label><input id="hold" type="number" min="0.5" max="60" step="0.5" value="1">
+<label for="fade">Fuellen / Wegspuelen (je Sekunden)</label><input id="fade" type="number" min="0.5" max="15" step="0.5" value="3">
+<label for="gap">Pause zwischen Woertern (Sekunden)</label><input id="gap" type="number" min="0" max="30" value="0.5">
+<p class="small">Der Regen fuellt die Wortform von oben nach unten. Unter dem Wort bleibt es schwarz. Nach einer Sekunde wird das Wort vom Regen weggespuelt. Der Matrix-Regen laeuft dahinter weiter.</p>
 <div class="actions"><button id="share">Nachrichten-Link kopieren</button><button id="clearMessage">Nachricht entfernen</button></div>
 <p id="shareStatus" class="small" role="status"></p>
 <p id="storageNote" role="status">Werte werden auf diesem Geraet gespeichert.</p>
@@ -36,7 +36,7 @@ input[type=text],input[type=number],textarea,select{box-sizing:border-box;width:
 </dialog><script>
 (()=>{'use strict';const canvas=document.querySelector('#rain'),ctx=canvas.getContext('2d',{alpha:false}),ui=document.querySelector('#ui'),pause=document.querySelector('#pause');let w,h,font,cols,last=0,time=0,running=true;const defaults={density:100,size:100,speed:100,space:50};
 const limits={density:[25,150],size:[70,200],speed:[25,200],space:[0,100]};
-const storageKey='matrix-regen-settings';const messageDefaults={message:'',messageStyle:'filled',hold:2.5,fade:0.8,gap:0.3,wordSize:95};let messageSettings={...messageDefaults},messageClock=0,maskCanvas=document.createElement('canvas'),maskCtx=maskCanvas.getContext('2d',{willReadFrequently:true}),maskPixels=null,maskW=0,maskH=0,maskText='',maskMode='',maskFont=0;
+const storageKey='matrix-regen-settings';const messageDefaults={message:'',messageStyle:'filled',hold:1,fade:3,gap:0.5,wordSize:95};let messageSettings={...messageDefaults},messageClock=0,maskCanvas=document.createElement('canvas'),maskCtx=maskCanvas.getContext('2d',{willReadFrequently:true}),maskPixels=null,maskW=0,maskH=0,maskText='',maskMode='',maskFont=0;
 const clamp=(v,lo,hi)=>Math.min(hi,Math.max(lo,v));
 const params=new URLSearchParams(location.search);
 function cleanMessage(value){return String(value||'').slice(0,600).replace(/\\n/g,'\n').replace(/[\u0000-\u0009\u000b-\u001f]/g,' ').trim();}
@@ -93,10 +93,12 @@ function buildMask(txt){
 }
 function messagePhase(){
  const a=lines();if(!a.length)return null;
- const f=messageSettings.fade,hold=messageSettings.hold,gap=messageSettings.gap,cycle=2*f+hold+gap;
+ const duration=messageSettings.fade,hold=messageSettings.hold,gap=messageSettings.gap;
+ const cycle=duration*2+hold+gap;
  const index=Math.floor(messageClock/cycle)%a.length,t=messageClock%cycle;
- const strength=t<f?t/f:t<f+hold?1:t<2*f+hold?1-(t-f-hold)/f:0;
- return {text:a[index],strength:clamp(strength,0,1)};
+ const stage=t<duration?'fill':t<duration+hold?'hold':t<duration*2+hold?'wash':'gap';
+ const progress=stage==='fill'?t/duration:stage==='hold'?1:stage==='wash'?(t-duration-hold)/duration:1;
+ return {text:a[index],stage,progress:clamp(progress,0,1),index};
 }
 const chars='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz@#$%&*+-=<>/\\\\|[]{}:;!?',rand=(a,b)=>a+Math.random()*(b-a),pick=()=>chars[Math.random()*chars.length|0];function resize(){
  w=innerWidth;h=innerHeight;
@@ -125,45 +127,49 @@ function wave(x,t,k){return(t*(k?37:49)+k*h*.46)%(h+220)-110+Math.sin(x*.014+t*(
  const dt=Math.min((now-last)/1000,.07)||.033;
  last=now;time+=dt;messageClock+=dt;
  const phase=messagePhase();
- if(phase&&phase.strength>0)buildMask(phase.text);
- ctx.fillStyle='rgba(0,0,0,'+(.13*Math.pow(3,(settings.space-50)/50))+')';
- ctx.fillRect(0,0,w,h);
- ctx.font=font+'px monospace';
- ctx.textBaseline='top';
+ if(phase)buildMask(phase.text);
+ // Full repaint avoids ghost trails underneath the text (the area is deliberately dry).
+ ctx.fillStyle='#000';ctx.fillRect(0,0,w,h);
+ ctx.font=font+'px monospace';ctx.textBaseline='top';
+ const top=phase?wordBounds.top:Math.ceil(h/font)+1;
+ const bottom=phase?wordBounds.bottom:top;
+ const span=Math.max(1,bottom-top);
  for(let ci=0;ci<cols.length;ci++){
   const c=cols[ci],length=Math.max(1,Math.round(c.length*Math.pow(2,(50-settings.space)/50)));
   c.y+=c.speed*settings.speed/100*dt;
   if(c.y-length*font>h+30)c.y=rand(-120,-20);
   const head=Math.floor(c.y/font);
+  // Real continuous Matrix rain exists only ABOVE the word. Below is completely black.
   for(let j=0;j<length;j++){
    const row=head-j,y=row*font;
-   if(y<0||y>h)continue;
-   const inBand=!!(phase&&phase.strength>0&&wordBounds&&ci>=wordBounds.left&&ci<wordBounds.right&&row>=wordBounds.top&&row<wordBounds.bottom);
-   const hit=inBand&&wordLookup.has(ci+','+row);
-   const glyphIndex=j%c.glyphs.length;
-   if(Math.random()<(hit?.08:.45))c.glyphs[glyphIndex]=pick();
-   const tail=Math.pow(1-j/length,1.35);
-   if(inBand){
-    const s=phase.strength;
-    if(hit){
-     const relief=.75+.25*tail;
-     const opacity=s*relief+(1-s)*tail;
-     ctx.fillStyle=j===0?'rgba(226,255,230,'+opacity+')':'rgba(95,255,135,'+opacity+')';
-     ctx.shadowColor='rgba(80,255,115,'+(s*.42)+')';
-     ctx.shadowBlur=Math.min(3,font*.3);
-    }else{
-     const dim=1-s*.78;
-     ctx.shadowBlur=0;
-     ctx.fillStyle=j===0?'rgba(220,255,230,'+dim+')':
-       'rgba(18,'+Math.round(85+130*tail)+',43,'+(Math.max(.25,tail*.95)*dim)+')';
-    }
-   }else{
-    ctx.shadowBlur=0;
-    ctx.fillStyle=j===0?'#dfffe4':j<4?'rgba(91,255,133,'+tail+')':
-      'rgba(13,'+Math.round(85+130*tail)+',43,'+Math.max(.25,tail*.95)+')';
-   }
-   ctx.fillText(c.glyphs[glyphIndex],c.x,y);
+   if(row<0||row>=top||y>h)continue;
+   if(Math.random()<.45)c.glyphs[j%c.glyphs.length]=pick();
+   const a=Math.pow(1-j/length,1.35);
+   ctx.fillStyle=j===0?'#e4ffe9':j<4?'rgba(91,255,133,'+a+')':
+    'rgba(13,'+Math.round(85+130*a)+',43,'+Math.max(.25,a*.95)+')';
+   ctx.fillText(c.glyphs[j%c.glyphs.length],c.x,y);
   }
+  if(!phase||phase.stage==='gap'||ci<wordBounds.left||ci>=wordBounds.right)continue;
+  // Rain collects only inside the engraved letter cells: a top-down fluid fill.
+  // Afterwards the rain washes it away from top to bottom.
+  const wiggle=Math.sin(ci*.72+time*2.1)*.22;
+  const fillEdge=top+phase.progress*span+wiggle;
+  const washEdge=top+phase.progress*span+wiggle;
+  for(let row=top;row<bottom;row++){
+   if(!wordLookup.has(ci+','+row))continue;
+   const wet=phase.stage==='fill'?row<=fillEdge:
+    phase.stage==='hold'?true:row>washEdge;
+   if(!wet)continue;
+   const distance=phase.stage==='fill'?Math.abs(row-fillEdge):Math.abs(row-washEdge);
+   const rim=distance<1.5;
+   const idx=((row+Math.floor(time*5)+ci*7)%c.glyphs.length+c.glyphs.length)%c.glyphs.length;
+   if(Math.random()<.15)c.glyphs[idx]=pick();
+   ctx.shadowColor='rgba(70,255,120,.5)';
+   ctx.shadowBlur=rim?Math.min(7,font*.8):Math.min(3,font*.25);
+   ctx.fillStyle=rim?'#e0ffe5':'rgba(94,255,131,.94)';
+   ctx.fillText(c.glyphs[idx],c.x,row*font);
+  }
+  ctx.shadowBlur=0;
  }
  ctx.shadowBlur=0;
 }
