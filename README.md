@@ -20,7 +20,7 @@ In Safari die [Website](https://vorzueglich.github.io/matrix-regen/) oeffnen →
 ## Projektdateien
 - `index.html`: HTML, CSS und JavaScript fuer die Canvas-Animation
 - `manifest.webmanifest`: PWA-Metadaten
-- `sw.js`: Offline-Cache (aktuell `matrix-regen-v1.7-r9`)
+- `sw.js`: Offline-Cache (aktuell `matrix-regen-v1.7-r10`)
 - `icon.svg`: App-Symbol
 - `CHANGELOG.md`: Aenderungshistorie
 
@@ -86,3 +86,6 @@ Nur vorhandene Zeichen der bewegten Regenkoepfe und -schweife werden gezeichnet.
 
 ### Versuch v1.7-r9 – Fuellen und Wegspuelen (26.10.2026)
 Neue Wortanimation: kontinuierlicher Regen oberhalb des Wortes, unten keine Regenzeichen. Die Buchstabensilhouette wird innerhalb derselben Canvas zeilenweise mit Matrixzeichen gefuellt, eine Sekunde gehalten und anschliessend von oben nach unten weggespuelt. Standard: 3 s Fuellen, 1 s Halten, 3 s Wegspuelen, 0.5 s Zwischenpause. Bestehende Nachrichten-Links bleiben kompatibel; die bisherigen Parameter `fade` und `hold` steuern neu Fuell-/Spueldauer bzw. Haltezeit.
+
+### Anpassung v1.7-r10 (26.10.2026)
+Regen horizontal rund 65 % dichter (auch bei lokal gespeicherter Dichte 100 %). Die Wortmaske wird proportional auf die zusaetzlichen Regenspalten verteilt, damit Wortbreite und Erkennbarkeit erhalten bleiben. Fuellen, Halten und Wegspuelen unveraendert.
