@@ -129,35 +129,38 @@ function wave(x,t,k){return(t*(k?37:49)+k*h*.46)%(h+220)-110+Math.sin(x*.014+t*(
  ctx.fillStyle='rgba(0,0,0,'+(.13*Math.pow(3,(settings.space-50)/50))+')';
  ctx.fillRect(0,0,w,h);
  ctx.font=font+'px monospace';
+ ctx.textBaseline='top';
  for(let ci=0;ci<cols.length;ci++){
   const c=cols[ci],length=Math.max(1,Math.round(c.length*Math.pow(2,(50-settings.space)/50)));
   c.y+=c.speed*settings.speed/100*dt;
   if(c.y-length*font>h+30)c.y=rand(-120,-20);
   const head=Math.floor(c.y/font);
-  const active=!!(phase&&phase.strength>0&&wordBounds&&ci>=wordBounds.left&&ci<wordBounds.right);
-  const start=active?Math.max(head,wordBounds.bottom-1):head;
-  const end=active?Math.min(head-length+1,wordBounds.top):head-length+1;
-  for(let row=start;row>=end;row--){
-   const y=row*font;if(y<0||y>h)continue;
-   const j=head-row,trail=j>=0&&j<length;
-   const within=active&&row>=wordBounds.top&&row<wordBounds.bottom;
-   const hit=within&&wordLookup.has(ci+','+row);
-   if(!trail&&!hit)continue;
-   const glyphIndex=((head-row)%c.glyphs.length+c.glyphs.length)%c.glyphs.length;
+  for(let j=0;j<length;j++){
+   const row=head-j,y=row*font;
+   if(y<0||y>h)continue;
+   const inBand=!!(phase&&phase.strength>0&&wordBounds&&ci>=wordBounds.left&&ci<wordBounds.right&&row>=wordBounds.top&&row<wordBounds.bottom);
+   const hit=inBand&&wordLookup.has(ci+','+row);
+   const glyphIndex=j%c.glyphs.length;
    if(Math.random()<(hit?.08:.45))c.glyphs[glyphIndex]=pick();
-   const tail=trail?Math.pow(1-j/length,1.35):0;
-   if(hit){
-    // A rain character brightens where its stream meets the raised letter.
-    const light=phase.strength*(.83+.15*tail);
-    ctx.fillStyle='rgba('+(trail&&j<3?210:92)+',255,'+(trail&&j<3?221:135)+','+light+')';
-    ctx.shadowColor='rgba(72,255,123,'+(phase.strength*.5)+')';
-    ctx.shadowBlur=Math.min(3,font*.4);
+   const tail=Math.pow(1-j/length,1.35);
+   if(inBand){
+    const s=phase.strength;
+    if(hit){
+     const relief=.75+.25*tail;
+     const opacity=s*relief+(1-s)*tail;
+     ctx.fillStyle=j===0?'rgba(226,255,230,'+opacity+')':'rgba(95,255,135,'+opacity+')';
+     ctx.shadowColor='rgba(80,255,115,'+(s*.42)+')';
+     ctx.shadowBlur=Math.min(3,font*.3);
+    }else{
+     const dim=1-s*.78;
+     ctx.shadowBlur=0;
+     ctx.fillStyle=j===0?'rgba(220,255,230,'+dim+')':
+       'rgba(18,'+Math.round(85+130*tail)+',43,'+(Math.max(.25,tail*.95)*dim)+')';
+    }
    }else{
     ctx.shadowBlur=0;
-    const reduction=within?(1-phase.strength*.68):1;
-    ctx.fillStyle=j===0?'rgba(220,255,230,'+reduction+')':
-      j<4?'rgba(91,255,133,'+(tail*reduction)+')':
-      'rgba(13,'+Math.round(85+130*tail)+',43,'+(Math.max(.25,tail*.95)*reduction)+')';
+    ctx.fillStyle=j===0?'#dfffe4':j<4?'rgba(91,255,133,'+tail+')':
+      'rgba(13,'+Math.round(85+130*tail)+',43,'+Math.max(.25,tail*.95)+')';
    }
    ctx.fillText(c.glyphs[glyphIndex],c.x,y);
   }
