@@ -2,6 +2,11 @@
 
 Versionierung: **Major.Minor**. Neue App-Versionen mit kurzer Aenderungsuebersicht; Dokumentationsaenderungen allein erhoehen die App-Version nicht.
 
+## Anpassung v1.7-r10 – 26.10.2026
+- 65 % mehr Regenspalten nebeneinander, auch fuer bestehende gespeicherte Dichtewerte.
+- Wortbreite entsprechend auf mehr Regenspalten aufgeteilt.
+- Fuell-/Spuel-Animation und Versionsnummer v1.7 bleiben unveraendert.
+
 ## Versuch v1.7-r9 – 26.10.2026
 - Neuer visueller Ansatz statt Relief: Regen fuellt die Buchstabensilhouette von oben nach unten, haelt 1 s und spuelt sie anschliessend weg.
 - Oberhalb normaler Regen, unterhalb der Wortzone schwarz; kein Regen unter dem Wort.
