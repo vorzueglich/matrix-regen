@@ -145,7 +145,7 @@ function wave(x,t,k){return(t*(k?37:49)+k*h*.46)%(h+220)-110+Math.sin(x*.014+t*(
   // The same continuous columns rain from the top into the letter-shaped reservoir.
   for(let j=0;j<length;j++){
    const row=head-j;
-   if(row<0||row>=top)continue;
+   if(row<0||row*font>h)continue;
    const a=Math.pow(1-j/length,1.35);
    if(Math.random()<.45)c.glyphs[j%c.glyphs.length]=pick();
    ctx.shadowBlur=0;
@@ -157,7 +157,6 @@ function wave(x,t,k){return(t*(k?37:49)+k*h*.46)%(h+220)-110+Math.sin(x*.014+t*(
   // Animated waterline: the word fills from above, stays bright, then gets washed away.
   const wobble=.22*Math.sin(ci*.37+time*3);
   const frontier=top+height*phase.progress+wobble;
-  const lastRain=head>=top-2&&head<=bottom+length;
   for(let row=top;row<bottom;row++){
    if(!wordLookup.has(ci+','+row))continue;
    const inside=phase.stage==='fill'?row<=frontier:
