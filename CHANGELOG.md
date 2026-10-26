@@ -2,6 +2,11 @@
 
 Versionierung: **Major.Minor**. Neue App-Versionen mit kurzer Aenderungsuebersicht; Dokumentationsaenderungen allein erhoehen die App-Version nicht.
 
+## Versuch v1.7-r9 – 26.10.2026
+- Neuer visueller Ansatz statt Relief: Regen fuellt die Buchstabensilhouette von oben nach unten, haelt 1 s und spuelt sie anschliessend weg.
+- Oberhalb normaler Regen, unterhalb der Wortzone schwarz; kein Regen unter dem Wort.
+- Wortweise Darstellung, responsive Breite und Teil-Links erhalten.
+
 ## Korrektur v1.7-r8 – 26.10.2026
 - Nur reale Regenzeichen rendern; kuenstliche Zeichen in Wortzellen ausserhalb des aktuellen Schweifs entfernt.
 - Wortmaske steuert ausschliesslich Helligkeit und Glow bereits vorhandener Zeichen.
