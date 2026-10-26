@@ -2,7 +2,7 @@
 
 Versionierung: **Major.Minor**. Neue App-Versionen mit kurzer Aenderungsuebersicht; Dokumentationsaenderungen allein erhoehen die App-Version nicht.
 
-## v1.6 – 25.10.2026 (produktiv)
+## v1.7 – 26.10.2026 (produktiv)\n- Woerter/Nachrichten erscheinen aus den laufenden Zeichen, bleiben sichtbar und loesen sich wieder auf.\n- Darstellung: ausgefuellt, Umriss, Geisterschrift; Dauer, Uebergang und Pause anpassbar.\n- URL-Parameter `msg`/`text` und Freigabe-Link mit gespeicherten Anzeigeoptionen.\n- Ohne Nachricht bleibt v1.6-Regen erhalten.\n- Offline-Cache und sichtbare Version aktualisiert.\n\n## v1.6 – 25.10.2026 (produktiv)
 - Update-Fehler behoben: Navigationen online zuerst aus dem Netzwerk, offline aus dem aktuellen App-Cache.
 - Neue Offline-Dateien ohne veralteten HTTP-Cache laden.
 - Service-Worker-Update explizit pruefen und bei Controller-Wechsel einmal neu laden.
