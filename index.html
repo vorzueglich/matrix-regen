@@ -62,7 +62,7 @@ for(const key of Object.keys(messageDefaults))document.getElementById(key).addEv
 document.querySelector('#clearMessage').onclick=()=>{messageSettings.message='';messageClock=0;invalidateMask();syncMessageControls();saveMessage();history.replaceState(null,'',location.pathname+location.hash);document.querySelector('#shareStatus').textContent='Normaler Matrix-Regen aktiviert.';};
 document.querySelector('#share').onclick=async()=>{const entries=messageSettings.message.trim().split(/\n|\|/).map(x=>x.trim()).filter(Boolean);if(!entries.length){document.querySelector('#shareStatus').textContent='Zuerst eine Nachricht eingeben.';return;}const url=new URL(location.href);url.search='';url.searchParams.set('msg',entries.join(' '));url.searchParams.set('style',messageSettings.messageStyle);url.searchParams.set('hold',messageSettings.hold);url.searchParams.set('fade',messageSettings.fade);url.searchParams.set('gap',messageSettings.gap);url.searchParams.set('width',messageSettings.wordSize);try{await navigator.clipboard.writeText(url.href);document.querySelector('#shareStatus').textContent='Link kopiert: '+url.href;}catch{document.querySelector('#shareStatus').textContent='Link zum Kopieren: '+url.href;}};
 
-let wordCells=[],wordBox=null;
+let wordCells=[],wordBox=null,wordColumns=[];
 const FONT5={"0":["01110","10011","10101","10101","11001","10001","01110"],"1":["010","110","010","010","010","010","111"],"2":["11110","00001","00001","01110","10000","10000","11111"],"3":["11110","00001","00001","01110","00001","00001","11110"],"4":["10010","10010","10010","11111","00010","00010","00010"],"5":["11111","10000","10000","11110","00001","00001","11110"],"6":["01111","10000","10000","11110","10001","10001","01110"],"7":["11111","00001","00010","00100","01000","01000","01000"],"8":["01110","10001","10001","01110","10001","10001","01110"],"9":["01110","10001","10001","01111","00001","00001","11110"],"A":["01110","11011","10001","11111","10001","10001","10001"],"B":["11110","10001","10001","11110","10001","10001","11110"],"C":["01111","11000","10000","10000","10000","11000","01111"],"D":["11110","10001","10001","10001","10001","10001","11110"],"E":["11111","10000","10000","11110","10000","10000","11111"],"F":["11111","10000","10000","11110","10000","10000","10000"],"G":["01111","10000","10000","10111","10001","10001","01111"],"H":["10001","10001","10001","11111","10001","10001","10001"],"I":["111","010","010","010","010","010","111"],"J":["00111","00010","00010","00010","10010","10010","01100"],"K":["10001","10010","10100","11000","10100","10010","10001"],"L":["10000","10000","10000","10000","10000","10000","11111"],"M":["10001","11011","10101","10101","10001","10001","10001"],"N":["10001","11001","10101","10011","10001","10001","10001"],"O":["01110","10001","10001","10001","10001","10001","01110"],"P":["11110","10001","10001","11110","10000","10000","10000"],"Q":["01110","10001","10001","10001","10101","10010","01101"],"R":["11110","10001","10001","11110","10100","10010","10001"],"S":["01111","10000","10000","01110","00001","00001","11110"],"T":["11111","00100","00100","00100","00100","00100","00100"],"U":["10001","10001","10001","10001","10001","10001","01110"],"V":["10001","10001","10001","10001","10001","01010","00100"],"W":["10001","10001","10001","10101","10101","10101","01010"],"X":["10001","10001","01010","00100","01010","10001","10001"],"Y":["10001","10001","01010","00100","00100","00100","00100"],"Z":["11111","00001","00010","00100","01000","10000","11111"],"-":["000","000","000","111","000","000","000"],".":["0","0","0","0","0","1","1"],"!":["1","1","1","1","1","0","1"],"?":["1110","0001","0001","0110","0100","0000","0100"],":":["0","1","1","0","1","1","0"],"Ä":["01010","00000","01110","11011","11111","10001","10001"],"Ö":["01010","00000","01110","10001","10001","10001","01110"],"Ü":["01010","00000","10001","10001","10001","10001","01110"],"É":["00100","00010","11111","10000","11110","10000","11111"]};
 function buildMask(txt){
  const key=txt+'|'+messageSettings.wordSize;
@@ -92,6 +92,9 @@ function buildMask(txt){
   col+=g[0].length*strokeWidth+gap;
  });
  wordBox={cell:effective,width,height,x:left,y:top};
+ // Map glyph relief onto the same moving rain columns, not a separate text layer.
+ wordColumns=cols.map(()=>[]);
+ for(const p of wordCells){let nearest=0,d=Infinity;for(let i=0;i<cols.length;i++){const diff=Math.abs((cols[i].x+font*.3)-(p.x+effective*.4));if(diff<d){d=diff;nearest=i;}}wordColumns[nearest].push(p);}
 }
 function messagePhase(){
  const a=lines();if(!a.length)return null;
@@ -100,21 +103,31 @@ function messagePhase(){
  const strength=t<f?t/f:t<f+hold?1:t<2*f+hold?1-(t-f-hold)/f:0;
  return {text:a[index],strength:clamp(strength,0,1)};
 }
-function renderWord(phase){
+function drawRainRelief(c,index,phase,head,length){
  if(!phase||phase.strength<=0)return;
- buildMask(phase.text);
- const alpha=phase.strength,cell=wordBox.cell;
+ const cells=wordColumns[index];if(!cells||!cells.length)return;
+ const alpha=phase.strength;
+ const cell=wordBox.cell;
  ctx.save();
- ctx.font='900 '+(cell*.98)+'px monospace';
+ ctx.font='bold '+Math.max(1,cell*.98)+'px monospace';
  ctx.textBaseline='top';
- ctx.shadowColor='rgba(60,255,105,'+(alpha*.85)+')';
- ctx.shadowBlur=Math.min(5,cell*.25);
- for(const p of wordCells){
-  // Stable characters with staggered emergence, not randomized each frame.
-  if(p.order>Math.min(1,alpha*1.7))continue;
-  const shimmer=messageSettings.messageStyle==='ghost'?.72+.18*Math.sin(time*2+p.bright*9):.94+.06*Math.sin(time*1.3+p.bright*10);
-  const a=alpha*shimmer;
-  ctx.fillStyle=p.bright>.87?'rgba(225,255,230,'+a+')':'rgba(90,255,125,'+a+')';
+ for(const p of cells){
+  // Each glyph is carried by its actual rain stream. Its brightness rises
+  // where the falling head/trail crosses the letter's raised surface.
+  const row=p.y/font;
+  const distance=head-row;
+  const trail=distance>=0&&distance<=length?Math.pow(1-distance/Math.max(1,length),.58):0;
+  const nearHead=distance>=0&&distance<4?1:0;
+  const breathing=.10+.04*Math.sin(time*1.4+p.bright*8);
+  const illumination=clamp(breathing+trail*.78+nearHead*.18,0,1);
+  const base=messageSettings.messageStyle==='ghost'?.45:.72;
+  const opacity=alpha*(base+illumination*.27);
+  // Characters are anchored to the engraving, but look alive because their
+  // colour follows the moving trail rather than appearing all at once.
+  ctx.shadowColor='rgba(85,255,125,'+(alpha*trail*.65)+')';
+  ctx.shadowBlur=trail*cell*.65;
+  ctx.fillStyle=nearHead?'rgba(226,255,232,'+opacity+')':
+    'rgba('+(78+Math.round(trail*63))+',255,'+(109+Math.round(trail*38))+','+opacity+')';
   ctx.fillText(p.glyph,p.x,p.y);
  }
  ctx.restore();
@@ -128,7 +141,9 @@ const chars='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz@#$%&
  ctx.fillStyle='rgba(0,0,0,'+(.13*Math.pow(3,(settings.space-50)/50))+')';
  ctx.fillRect(0,0,w,h);
  ctx.font=font+'px monospace';
- for(const c of cols){
+ const phase=messagePhase();
+ if(phase&&phase.strength>0)buildMask(phase.text);
+ for(let ci=0;ci<cols.length;ci++){const c=cols[ci];
   const length=Math.max(1,Math.round(c.length*Math.pow(2,(50-settings.space)/50)));
   c.y+=c.speed*settings.speed/100*dt;
   if(c.y-length*font>h+30)c.y=rand(-120,-20);
@@ -140,8 +155,9 @@ const chars='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz@#$%&
    ctx.fillStyle=j===0?'#dfffe4':j<4?'rgba(91,255,133,'+a+')':'rgba(13,'+Math.round(85+130*a)+',43,'+Math.max(.25,a*.95)+')';
    ctx.fillText(c.glyphs[j],c.x,y);
   }
+  drawRainRelief(c,ci,phase,head,length);
  }
- renderWord(messagePhase());
+
 }
 pause.onclick=()=>{running=!running;pause.textContent=running?'Pause':'Weiter';last=performance.now()};canvas.onclick=()=>ui.hidden=!ui.hidden;document.querySelector('#info').onclick=()=>document.querySelector('#help').hidden=false;document.querySelector('#close').onclick=()=>document.querySelector('#help').hidden=true;addEventListener('resize',resize);resize();requestAnimationFrame(draw);if('serviceWorker'in navigator){let refreshing=false;const hadController=!!navigator.serviceWorker.controller;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(hadController&&!refreshing){refreshing=true;location.reload();}});navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(async r=>{r.update().catch(()=>{});await navigator.serviceWorker.ready;if(r.active)document.querySelector('#status').textContent='Offline bereit · v1.7'}).catch(()=>document.querySelector('#status').textContent='Online · v1.7');}})();
 </script></body></html>
