@@ -2,6 +2,11 @@
 
 Versionierung: **Major.Minor**. Neue App-Versionen mit kurzer Aenderungsuebersicht; Dokumentationsaenderungen allein erhoehen die App-Version nicht.
 
+## Korrektur v1.7-r5 – 26.10.2026
+- Gravur-/Relief-Effekt: Wortzeichen werden in den laufenden Regen-Spalten mit den Streams synchron gerendert.
+- Leuchten wird beim Vorbeifliessen von Regenkopf und -schweif intensiviert; Grundhelligkeit fuer Lesbarkeit.
+- Keine schwarze Flaeche, Wortweise-Anzeige, adaptive Wortbreite und Teilen unveraendert.
+
 ## Korrektur v1.7-r4 – 26.10.2026
 - Schlanke Bitmap-Zeichen statt breiter Font-Maske, mit zwei Rasterspalten Zeichenabstand.
 - Neue Einstellung maximale Wortbreite (50–100 %, Standard 95 %), automatische Skalierung auch langer Woerter.
